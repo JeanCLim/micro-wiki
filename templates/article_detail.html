@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ article.title }} | Micro-Wiki{% endblock %}
+
+{% block content %}
+<article class="article-detail">
+    <header class="article-header">
+        <h1>{{ article.title }}</h1>
+        <div class="article-author-row">
+            <div class="author-avatar">👤</div>
+            <div class="author-info">
+                Por <strong>{{ article.author.username }}</strong>
+                <span class="meta-date">Atualizado em {{ article.updated_at|date:"d M Y" }}</span>
+                {% if article.status != 'APPROVED' %}
+                <span class="badge" style="background-color: var(--accent-blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #000; margin-left: 10px;">Status: {{ article.get_status_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    {% if article.status == 'PENDING' and request.user.role in 'ADMIN,SUPERADMIN' %}
+    <div class="approval-actions" style="margin-bottom: 20px; padding: 15px; background-color: rgba(30, 174, 180, 0.1); border: 1px solid var(--accent-blue); border-radius: 6px;">
+        <p style="margin-top: 0; margin-bottom: 15px;"><strong>Ação Necessária:</strong> Este artigo está aguardando revisão para ser publicado.</p>
+        <div style="display: flex; gap: 10px;">
+            <form method="POST" action="{% url 'article_review' article.slug %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="approve">
+                <button type="submit" class="btn-primary" style="border: none;">Aprovar e Publicar</button>
+            </form>
+            <form method="POST" action="{% url 'article_review' article.slug %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reject">
+                <button type="submit" class="btn-secondary" style="background: transparent; color: var(--text-primary); border: 1px solid var(--border-color);">Rejeitar (Retornar a Rascunho)</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="article-metadata">
+        <h3>Identificação</h3>
+        <table class="metadata-table">
+            <thead>
+                <tr>
+                    <th>Versão</th>
+                    <th>Data publicação</th>
+                    <th>Vigente até</th>
+                    <th>Alterações</th>
+                    <th>Área responsável</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ article.version|default:"01" }}</td>
+                    <td>{{ article.created_at|date:"M/y" }}</td>
+                    <td>{% if article.valid_until %}{{ article.valid_until|date:"M/y" }}{% else %}-{% endif %}</td>
+                    <td>{{ article.changes_summary|default:"Criação" }}</td>
+                    <td>{{ article.responsible_area|default:"-" }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="article-body">
+        {{ article.content|safe }}
+    </div>
+</article>
+{% endblock %}

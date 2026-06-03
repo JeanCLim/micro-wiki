@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block title %}Configurações | Micro-Wiki{% endblock %}
+
+{% block content %}
+<div class="header" style="margin-bottom: 2rem;">
+    <h1>Configurações do Sistema</h1>
+    <p style="color: var(--text-secondary);">Painel Administrativo do Workspace</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 250px 1fr; gap: 30px; min-height: 60vh;">
+    <!-- Sidebar Interna -->
+    <div style="display: flex; flex-direction: column; justify-content: space-between; background-color: var(--bg-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
+            <li><button class="settings-tab active" onclick="showSettingsTab('geral')" style="width: 100%; text-align: left; padding: 12px 15px; background: rgba(20, 184, 166, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue); border-radius: 6px; cursor: pointer; font-weight: 500;">⚙️ Geral</button></li>
+            <li><button class="settings-tab" onclick="showSettingsTab('usuarios')" style="width: 100%; text-align: left; padding: 12px 15px; background: transparent; color: var(--text-secondary); border: 1px solid transparent; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">👥 Usuários</button></li>
+            <li><button class="settings-tab" onclick="showSettingsTab('categorias')" style="width: 100%; text-align: left; padding: 12px 15px; background: transparent; color: var(--text-secondary); border: 1px solid transparent; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">📂 Categorias</button></li>
+        </ul>
+        
+        <div style="margin-top: 30px;">
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 15px;">
+            <a href="{% url 'logout' %}" class="logout-minimalist" style="display: block; width: 100%; text-align: left; padding: 8px 10px; color: var(--text-secondary); font-weight: 500; text-decoration: none; transition: color 0.2s;">🚪 Sair</a>
+            <style>
+                .logout-minimalist:hover { color: #ef4444 !important; }
+                .activity-row { background-color: rgba(255, 255, 255, 0.02); }
+                .activity-btn:hover { background-color: rgba(20, 184, 166, 0.1); border-radius: 4px; }
+            </style>
+        </div>
+    </div>
+
+    <!-- Conteúdo das Abas -->
+    <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
+        
+        <!-- Aba: Geral -->
+        <div id="tab-geral" class="settings-pane" style="display: block;">
+            <h2 style="margin-top: 0; margin-bottom: 20px;">Informações do Workspace</h2>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_company">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Nome da Empresa</label>
+                    <input type="text" name="name" value="{{ company.name }}" style="width: 100%; padding: 12px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Domínio (Opcional)</label>
+                    <input type="text" name="domain" value="{{ company.domain }}" placeholder="ex: meudominio.com" style="width: 100%; padding: 12px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;">
+                </div>
+                <button type="submit" class="btn-primary" style="padding: 10px 20px;">Salvar Alterações</button>
+            </form>
+        </div>
+
+        <!-- Aba: Usuários -->
+        <div id="tab-usuarios" class="settings-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Equipe ({{ users|length }})</h2>
+                <button class="btn-primary" onclick="document.getElementById('modal-user').showModal()" style="padding: 8px 16px;">+ Convidar Usuário</button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Nome</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">E-mail</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Status</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Cargo</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <td style="padding: 12px; font-weight: 500;">
+                                {{ u.username }}
+                                {% if u.recent_articles %}
+                                <button type="button" class="activity-btn" onclick="toggleActivity('activity-{{ u.id }}')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; margin-left: 5px; font-size: 0.9rem;" title="Ver Atividade">👁️</button>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px; color: var(--text-secondary);">{{ u.email|default:"-" }}</td>
+                            <td style="padding: 12px;">
+                                {% if u.is_online %}
+                                <span style="color: #10B981; font-size: 0.85rem; font-weight: 500;">🟢 Online</span>
+                                {% else %}
+                                <span style="color: #EF4444; font-size: 0.85rem; font-weight: 500;">🔴 Offline</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px;">
+                                <span style="background-color: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">{{ u.get_role_display }}</span>
+                            </td>
+                            <td style="padding: 12px; text-align: right;">
+                                {% if u != request.user %}
+                                    {% if request.user.role == 'ADMIN' or request.user.role == 'SUPERADMIN' %}
+                                    <form method="POST" style="display: inline-block; margin: 0;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update_role">
+                                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                                        <select name="role" onchange="this.form.submit()" style="padding: 6px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; font-size: 0.85rem;">
+                                            <option value="COMMON" {% if u.role == 'COMMON' %}selected{% endif %}>Usuário Comum</option>
+                                            <option value="EMPLOYEE" {% if u.role == 'EMPLOYEE' %}selected{% endif %}>Funcionário</option>
+                                            <option value="ADMIN" {% if u.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                                        </select>
+                                    </form>
+                                    {% endif %}
+                                {% else %}
+                                <span style="color: var(--text-secondary); font-size: 0.85rem;">Você</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <!-- Accordion de Atividade -->
+                        <tr id="activity-{{ u.id }}" class="activity-row" style="display: none; border-bottom: 1px solid var(--table-border);">
+                            <td colspan="5" style="padding: 15px; font-size: 0.85rem; color: var(--text-secondary);">
+                                <strong style="color: var(--text-primary);">Últimas Edições:</strong>
+                                <ul style="margin: 8px 0 0 20px; padding: 0;">
+                                    {% for art in u.recent_articles %}
+                                    <li><a href="{{ art.get_absolute_url }}" style="color: var(--accent-blue); text-decoration: none;">{{ art.title }}</a> <span style="color: #64748B;">({{ art.updated_at|date:"d/m/Y H:i" }})</span></li>
+                                    {% empty %}
+                                    <li>Nenhuma atividade recente.</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Aba: Categorias -->
+        <div id="tab-categorias" class="settings-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Categorias do Workspace</h2>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Nome da Categoria</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in categories %}
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <td style="padding: 12px; font-weight: 500;">
+                                {{ c.name }}
+                                {% if c.is_special %}<span title="Categoria Especial" style="margin-left:5px; font-size:0.9rem;">🔒</span>{% endif %}
+                            </td>
+                            <td style="padding: 12px; text-align: right;">
+                                <form method="POST" style="margin: 0;" onsubmit="return confirm('Tem certeza que deseja excluir esta categoria? Isso pode afetar os artigos vinculados.');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_category">
+                                    <input type="hidden" name="category_id" value="{{ c.id }}">
+                                    <button type="submit" style="background: transparent; border: none; color: #ef4444; cursor: pointer; text-decoration: underline;">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" style="padding: 12px; color: var(--text-secondary);">Nenhuma categoria encontrada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Modal Convidar Usuário -->
+<dialog id="modal-user" style="margin: auto; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 350px;">
+    <h3 style="margin-top: 0; margin-bottom: 15px;">Convidar Usuário</h3>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">A senha padrão gerada será <b>changeme123</b>.</p>
+    
+    <input type="text" id="new-user-name" placeholder="Nome de Usuário (Username)" style="width: 100%; padding: 8px; margin-bottom: 10px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+    
+    <input type="email" id="new-user-email" placeholder="E-mail" style="width: 100%; padding: 8px; margin-bottom: 10px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+    
+    <select id="new-user-role" style="width: 100%; padding: 8px; margin-bottom: 20px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+        <option value="COMMON">Usuário Comum (Leitor)</option>
+        <option value="EMPLOYEE">Funcionário (Autor)</option>
+        <option value="ADMIN">Administrador</option>
+    </select>
+    
+    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" onclick="document.getElementById('modal-user').close()" style="background: transparent; color: var(--text-secondary); border: none; cursor: pointer;">Cancelar</button>
+        <button type="button" onclick="inviteUser()" style="background-color: var(--accent-blue); color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Criar Usuário</button>
+    </div>
+</dialog>
+
+<script>
+function toggleActivity(id) {
+    const el = document.getElementById(id);
+    if(el.style.display === 'none') {
+        el.style.display = 'table-row';
+    } else {
+        el.style.display = 'none';
+    }
+}
+
+function showSettingsTab(tabId) {
+    // Hide all panes
+    document.querySelectorAll('.settings-pane').forEach(el => el.style.display = 'none');
+    // Remove active styles from buttons
+    document.querySelectorAll('.settings-tab').forEach(el => {
+        el.style.background = 'transparent';
+        el.style.color = 'var(--text-secondary)';
+        el.style.border = '1px solid transparent';
+    });
+    
+    // Show selected pane
+    document.getElementById('tab-' + tabId).style.display = 'block';
+    
+    // Set active style to clicked button (find it by looking for the onclick string)
+    const btn = Array.from(document.querySelectorAll('.settings-tab')).find(el => el.getAttribute('onclick').includes(tabId));
+    if(btn) {
+        btn.style.background = 'rgba(20, 184, 166, 0.1)';
+        btn.style.color = 'var(--accent-blue)';
+        btn.style.border = '1px solid var(--accent-blue)';
+    }
+}
+
+function inviteUser() {
+    const username = document.getElementById('new-user-name').value;
+    const email = document.getElementById('new-user-email').value;
+    const role = document.getElementById('new-user-role').value;
+    
+    if(!username) {
+        alert("Username obrigatório.");
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('email', email);
+    formData.append('role', role);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch("{% url 'api_user_create' %}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.success) {
+            window.location.reload();
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

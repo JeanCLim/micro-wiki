@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% block title %}Master Admin | Global SaaS{% endblock %}
+
+{% block content %}
+<style>
+    /* Sobrescrevendo a paleta do Tema apenas para o painel Master */
+    :root {
+        --accent-blue: #8B5CF6 !important; /* Roxo Neon / Purple Accent */
+    }
+    
+    /* Remove a sidebar padrão do sistema no painel Master */
+    .sidebar {
+        display: none !important;
+    }
+    .main-content {
+        flex: 1;
+        width: 100%;
+    }
+    
+    .master-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        background-color: rgba(139, 92, 246, 0.15);
+        color: #A78BFA;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+    
+    .stats-card {
+        background-color: var(--bg-surface);
+        padding: 25px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .stats-value {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--accent-blue);
+        margin: 10px 0;
+    }
+    
+    .stats-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.85rem;
+    }
+</style>
+
+<div class="header" style="margin-bottom: 2rem;">
+    <span class="master-badge">⚡ SUPERADMIN GLOBAL</span>
+    <h1 style="margin-top: 0;">Painel de Controle SaaS</h1>
+    <p style="color: var(--text-secondary);">Gerenciamento isolado de Empresas, Workspaces e Estruturas Globais.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 250px 1fr; gap: 30px; min-height: 60vh;">
+    <!-- Sidebar Interna -->
+    <div style="display: flex; flex-direction: column; justify-content: space-between; background-color: var(--bg-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
+            <li><button class="settings-tab active" onclick="showMasterTab('dashboard')" style="width: 100%; text-align: left; padding: 12px 15px; background: rgba(139, 92, 246, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue); border-radius: 6px; cursor: pointer; font-weight: 500;">📊 Visão Geral</button></li>
+            <li><button class="settings-tab" onclick="showMasterTab('empresas')" style="width: 100%; text-align: left; padding: 12px 15px; background: transparent; color: var(--text-secondary); border: 1px solid transparent; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">🏢 Workspaces</button></li>
+            <li><button class="settings-tab" onclick="showMasterTab('usuarios')" style="width: 100%; text-align: left; padding: 12px 15px; background: transparent; color: var(--text-secondary); border: 1px solid transparent; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">👥 Gestão Global</button></li>
+            <li><button class="settings-tab" onclick="showMasterTab('categorias')" style="width: 100%; text-align: left; padding: 12px 15px; background: transparent; color: var(--text-secondary); border: 1px solid transparent; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">🔗 Categorias Master</button></li>
+        </ul>
+        
+        <div style="margin-top: 30px;">
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 15px;">
+            <a href="{% url 'logout' %}" class="logout-minimalist" style="display: block; width: 100%; text-align: left; padding: 8px 10px; color: var(--text-secondary); font-weight: 500; text-decoration: none; transition: color 0.2s;">🚪 Sair do Sistema</a>
+        </div>
+    </div>
+
+    <!-- Conteúdo das Abas -->
+    <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
+        
+        <!-- Aba: Dashboard Overview -->
+        <div id="tab-dashboard" class="master-pane" style="display: block;">
+            <h2 style="margin-top: 0; margin-bottom: 25px;">Panorama do Ecossistema</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div class="stats-card">
+                    <span class="stats-label">Empresas Ativas</span>
+                    <span class="stats-value">{{ total_companies }}</span>
+                </div>
+                <div class="stats-card">
+                    <span class="stats-label">Usuários Totais</span>
+                    <span class="stats-value">{{ total_users }}</span>
+                </div>
+                <div class="stats-card">
+                    <span class="stats-label">Usuários Online</span>
+                    <span class="stats-value" style="color: #10B981;">{{ online_users }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aba: Workspaces -->
+        <div id="tab-empresas" class="master-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Empresas Cadastradas</h2>
+                <button class="btn-primary" onclick="document.getElementById('modal-company').showModal()" style="padding: 8px 16px;">+ Nova Empresa</button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Empresa</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">CNPJ / Domínio</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Membros</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Status Acesso</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comp in companies %}
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <td style="padding: 12px; font-weight: 500;">{{ comp.name }}</td>
+                            <td style="padding: 12px; color: var(--text-secondary);">{{ comp.cnpj }} <br> <span style="font-size: 0.8rem; color: #64748B;">{{ comp.domain }}</span></td>
+                            <td style="padding: 12px;">{{ comp.users.count }}</td>
+                            <td style="padding: 12px;">
+                                {% if comp.is_active %}
+                                <span style="color: #10B981; font-weight: 500; font-size: 0.85rem;">Ativo</span>
+                                {% else %}
+                                <span style="color: #EF4444; font-weight: 500; font-size: 0.85rem;">Suspenso</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px; text-align: right;">
+                                <form method="POST" style="margin: 0;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="toggle_company">
+                                    <input type="hidden" name="company_id" value="{{ comp.id }}">
+                                    <button type="submit" class="btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; border-color: var(--text-secondary); color: var(--text-primary);">
+                                        {% if comp.is_active %}Suspender{% else %}Reativar{% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" style="padding: 15px; color: var(--text-secondary); text-align: center;">Nenhuma empresa cadastrada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Aba: Gestão Global de Usuários -->
+        <div id="tab-usuarios" class="master-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Base Global de Usuários</h2>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Nome</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Empresa Origem</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Role</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Atividade</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary); text-align: right;">Deletar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <td style="padding: 12px; font-weight: 500;">
+                                {{ u.username }}
+                                <div style="font-size: 0.8rem; color: #64748B;">{{ u.email }}</div>
+                            </td>
+                            <td style="padding: 12px;">{{ u.company.name|default:"Sem Empresa" }}</td>
+                            <td style="padding: 12px;">
+                                <span style="background-color: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border-color);">{{ u.get_role_display }}</span>
+                            </td>
+                            <td style="padding: 12px;">
+                                {% if u.is_online %}
+                                <span style="color: #10B981; font-size: 0.85rem; font-weight: 500;">🟢 Online</span>
+                                {% else %}
+                                <span style="color: #EF4444; font-size: 0.85rem; font-weight: 500;">🔴 Offline</span>
+                                {% endif %}
+                                <div style="font-size: 0.75rem; color: #64748B;">Último acesso: {{ u.last_seen|date:"d/m H:i"|default:"-" }}</div>
+                            </td>
+                            <td style="padding: 12px; text-align: right;">
+                                <form method="POST" style="margin: 0;" onsubmit="return confirm('Tem certeza que deseja apagar este usuário DEFINITIVAMENTE da base?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_user">
+                                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                                    <button type="submit" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 1.1rem;" title="Apagar Conta">🗑️</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Aba: Categorias Master -->
+        <div id="tab-categorias" class="master-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Injeção de Categorias</h2>
+                <button class="btn-primary" onclick="document.getElementById('modal-category').showModal()" style="padding: 8px 16px;">Criar e Injetar Categoria</button>
+            </div>
+            
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Categorias Master ficam sem vínculo (empresa nula) e não aparecem na Wiki de clientes. Elas servem apenas de rascunho de referência para injeção ou uso interno.</p>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Nome da Categoria Master</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in categories %}
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <td style="padding: 12px; font-weight: 500;">{{ c.name }} <span title="Master" style="margin-left:5px;">👑</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td style="padding: 12px; color: var(--text-secondary);">Nenhuma categoria master referenciada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Modal Nova Empresa -->
+<dialog id="modal-company" style="margin: auto; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 25px rgba(0,0,0,0.5); width: 400px;">
+    <h3 style="margin-top: 0; margin-bottom: 20px; color: var(--accent-blue);">Nova Instância (Workspace)</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_company">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Nome Fantasia</label>
+        <input type="text" name="name" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">CNPJ ou Identificador Único</label>
+        <input type="text" name="cnpj" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Domínio de Email (Opcional)</label>
+        <input type="text" name="domain" placeholder="ex: empresa.com.br" style="width: 100%; padding: 10px; margin-bottom: 25px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" onclick="document.getElementById('modal-company').close()" style="background: transparent; color: var(--text-secondary); border: none; cursor: pointer; padding: 8px;">Cancelar</button>
+            <button type="submit" class="btn-primary" style="padding: 8px 16px;">Criar Empresa</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Modal Injetar Categoria -->
+<dialog id="modal-category" style="margin: auto; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 25px rgba(0,0,0,0.5); width: 400px;">
+    <h3 style="margin-top: 0; margin-bottom: 20px; color: var(--accent-blue);">Injeção de Categoria Especial</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="inject_category">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Nome da Categoria</label>
+        <input type="text" name="name" required placeholder="ex: Políticas de Privacidade SaaS" style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Alvo da Injeção</label>
+        <select name="target" style="width: 100%; padding: 10px; margin-bottom: 25px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+            <option value="all">Todas as Empresas Atuais</option>
+            {% for comp in companies %}
+            <option value="{{ comp.id }}">Apenas: {{ comp.name }}</option>
+            {% endfor %}
+        </select>
+        
+        <p style="font-size: 0.8rem; color: #F59E0B; margin-top: -15px; margin-bottom: 20px;">Nota: A categoria será automaticamente marcada com 🔒 (Especial) nos workspaces, blindando-a contra exclusão de usuários não-Admins.</p>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" onclick="document.getElementById('modal-category').close()" style="background: transparent; color: var(--text-secondary); border: none; cursor: pointer; padding: 8px;">Cancelar</button>
+            <button type="submit" class="btn-primary" style="padding: 8px 16px;">Injetar</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+function showMasterTab(tabId) {
+    document.querySelectorAll('.master-pane').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.settings-tab').forEach(el => {
+        el.style.background = 'transparent';
+        el.style.color = 'var(--text-secondary)';
+        el.style.border = '1px solid transparent';
+    });
+    
+    document.getElementById('tab-' + tabId).style.display = 'block';
+    
+    const btn = Array.from(document.querySelectorAll('.settings-tab')).find(el => el.getAttribute('onclick').includes(tabId));
+    if(btn) {
+        btn.style.background = 'rgba(139, 92, 246, 0.1)';
+        btn.style.color = 'var(--accent-blue)';
+        btn.style.border = '1px solid var(--accent-blue)';
+    }
+}
+</script>
+{% endblock %}

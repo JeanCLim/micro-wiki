@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Em Desenvolvimento | Micro-Wiki</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        .error-body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            text-align: center;
+        }
+        .error-container {
+            max-width: 500px;
+            padding: 40px;
+        }
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            color: var(--accent-blue);
+        }
+        .error-container h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        .error-container p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 32px;
+        }
+        .btn-home {
+            display: inline-block;
+            background-color: var(--accent-blue);
+            color: #000;
+            padding: 14px 32px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .btn-home:hover {
+            background-color: var(--accent-blue-hover);
+            color: #000;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body class="error-body">
+    <div class="error-container">
+        <div class="error-icon">🚧</div>
+        <h1>Página Ainda em Desenvolvimento</h1>
+        <p>Esta área estará disponível em breve. Estamos trabalhando para construir a melhor experiência para você.</p>
+        <a href="{% url 'home' %}" class="btn-home">Voltar ao Início</a>
+    </div>
+</body>
+</html>

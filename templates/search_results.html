@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Busca: {{ query }} | Micro-Wiki{% endblock %}
+
+{% block content %}
+<h2>Resultados da busca para: <span style="color: var(--accent-neon-blue);">"{{ query }}"</span></h2>
+<br>
+
+{% for article in articles %}
+<article class="article-card">
+    <div class="meta-info">
+        {% if article.category %}<span class="tag">{{ article.category.name }}</span>{% endif %}
+    </div>
+    <h2><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h2>
+    <p>{{ article.content|truncatewords:30 }}</p>
+</article>
+{% empty %}
+<p>Nenhum artigo encontrado para esta busca.</p>
+{% endfor %}
+{% endblock %}

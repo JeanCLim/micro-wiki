@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Micro-Wiki</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body class="login-body">
+    {% include 'loader.html' %}
+    <div class="login-container">
+        <div class="login-header">
+            <div class="company-logo">
+                LOGO de: {{ request.session.company_code }}
+            </div>
+            <h2>Bem-vindo de volta</h2>
+            <p>Entre com suas credenciais para acessar o sistema</p>
+        </div>
+        
+        {% if error %}
+        <div class="login-error">{{ error }}</div>
+        {% endif %}
+
+        <div class="tab-selector">
+            <button class="tab-btn active" onclick="switchTab('email')">Entrar</button>
+            <button class="tab-btn" onclick="switchTab('employee')">Funcionário</button>
+        </div>
+
+        <div class="login-forms">
+            <!-- Form: Usuário Comum (Email) -->
+            <form id="form-email" method="POST" action="{% url 'login' %}" autocomplete="off">
+                {% csrf_token %}
+                <input type="hidden" name="login_type" value="email">
+                
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" name="username" placeholder="seu@email.com" required autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Senha</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" name="password" id="pass-email" required autocomplete="new-password">
+                        <span class="toggle-password" onclick="togglePass('pass-email')">👁️</span>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me"><input type="checkbox"> Lembrar-me</label>
+                    <a href="#" class="forgot-password">Esqueceu a senha?</a>
+                </div>
+
+                <button type="submit" class="btn-primary btn-block">Entrar</button>
+            </form>
+
+            <!-- Form: Funcionário (Código) -->
+            <form id="form-employee" method="POST" action="{% url 'login' %}" style="display: none;" autocomplete="off">
+                {% csrf_token %}
+                <input type="hidden" name="login_type" value="employee_code">
+                
+                <div class="form-group">
+                    <label>Código</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">#</span>
+                        <input type="text" name="username" id="emp-code" placeholder="XXXXXXXX-XX" required autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Senha</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" name="password" id="pass-emp" required autocomplete="new-password">
+                        <span class="toggle-password" id="eye-emp" onclick="togglePass('pass-emp')">👁️</span>
+                    </div>
+                </div>
+
+                <div class="form-options" id="options-emp">
+                    <label class="remember-me"><input type="checkbox" id="remember-emp"> Lembrar-me</label>
+                </div>
+
+                <button type="submit" class="btn-primary btn-block">Entrar</button>
+                <p class="helper-text">Use o código fornecido pelo seu administrador</p>
+            </form>
+        </div>
+
+        <div class="login-footer">
+            <p>Não tem uma conta? <a href="#">Cadastre-se aqui</a></p>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            const btnEmail = document.querySelectorAll('.tab-btn')[0];
+            const btnEmp = document.querySelectorAll('.tab-btn')[1];
+            const formEmail = document.getElementById('form-email');
+            const formEmp = document.getElementById('form-employee');
+
+            if (tab === 'email') {
+                btnEmail.classList.add('active');
+                btnEmp.classList.remove('active');
+                formEmail.style.display = 'block';
+                formEmp.style.display = 'none';
+            } else {
+                btnEmp.classList.add('active');
+                btnEmail.classList.remove('active');
+                formEmp.style.display = 'block';
+                formEmail.style.display = 'none';
+            }
+        }
+
+        function togglePass(inputId) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+            } else {
+                input.type = 'password';
+            }
+        }
+
+        // JS Security para Superadmin
+        const empCodeInput = document.getElementById('emp-code');
+        const eyeEmp = document.getElementById('eye-emp');
+        const optionsEmp = document.getElementById('options-emp');
+        const rememberEmp = document.getElementById('remember-emp');
+
+        empCodeInput.addEventListener('input', function() {
+            if (this.value.startsWith('SUP-')) {
+                eyeEmp.style.display = 'none';
+                optionsEmp.style.display = 'none';
+                rememberEmp.checked = false;
+                
+                // Se a senha estiver revelada, esconder imediatamente
+                const passInput = document.getElementById('pass-emp');
+                if (passInput.type === 'text') {
+                    passInput.type = 'password';
+                }
+            } else {
+                eyeEmp.style.display = 'inline';
+                optionsEmp.style.display = 'flex';
+            }
+        });
+    </script>
+</body>
+</html>

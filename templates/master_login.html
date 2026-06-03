@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Master | MicroWiki</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        /* Aplica o Master Accent (Purple) na tela de login Master */
+        :root {
+            --accent-blue: #8B5CF6 !important;
+            --accent-hover: #7C3AED !important;
+        }
+    </style>
+</head>
+<body class="login-body">
+    {% include 'loader.html' %}
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    
+    <div style="background: var(--bg-surface); padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); width: 100%; max-width: 400px; border: 1px solid var(--border-color); text-align: center;">
+        
+        <div style="border: 1px dashed var(--accent-blue); padding: 15px; border-radius: 8px; margin-bottom: 30px; display: inline-block;">
+            <h2 style="margin: 0; color: var(--accent-blue); font-size: 1.2rem;">👑 Acesso Master</h2>
+        </div>
+
+        <h1 style="margin-top: 0; margin-bottom: 10px; font-size: 1.8rem; color: var(--text-primary);">Validação Global</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">Insira a contra senha do usuário Superadmin para desbloquear o painel.</p>
+
+        {% if error %}
+        <div style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #EF4444; padding: 12px; border-radius: 6px; margin-bottom: 20px; text-align: left;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'login' %}" autocomplete="off">
+            {% csrf_token %}
+            <!-- Usando login_type genérico pois Superadmins podem logar com e-mail/username padrão -->
+            <input type="hidden" name="login_type" value="email">
+
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">E-mail ou Usuário Master</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 12px; top: 12px;">👑</span>
+                    <input type="text" name="username" required placeholder="superadmin" style="width: 100%; padding: 12px 12px 12px 40px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-main); color: var(--text-primary); font-size: 1rem; box-sizing: border-box;" autocomplete="off">
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 30px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">Contra Senha</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 12px; top: 12px;">🔒</span>
+                    <input type="password" name="password" required placeholder="Sua senha secreta" style="width: 100%; padding: 12px 12px 12px 40px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-main); color: var(--text-primary); font-size: 1rem; box-sizing: border-box;" autocomplete="new-password">
+                </div>
+            </div>
+
+            <button type="submit" style="width: 100%; padding: 14px; background-color: var(--accent-blue); color: #FFF; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s;">
+                Desbloquear Painel
+            </button>
+        </form>
+
+        <div style="margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <a href="{% url 'gateway' %}" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;">Voltar ao Gateway Padrão</a>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

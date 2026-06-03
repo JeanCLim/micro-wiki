@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ category.name }} | Micro-Wiki{% endblock %}
+
+{% block content %}
+<h2>Categoria: <span style="color: var(--accent-blue);">{{ category.name }}</span></h2>
+<p style="color: var(--text-muted); margin-bottom: 20px;">{{ category.description }}</p>
+
+{% for article in articles %}
+<article class="article-card">
+    <h2><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h2>
+    <p>{{ article.content|truncatewords:20 }}</p>
+</article>
+{% empty %}
+<p>Nenhum artigo nesta categoria.</p>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header" style="margin-bottom: 2rem;">
+    <h1>Minha Conta</h1>
+    <p style="color: var(--text-secondary);">Gerencie seu perfil e contribuições</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 300px 1fr; gap: 30px;">
+    <!-- Resumo do Usuário -->
+    <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; height: fit-content;">
+        <div style="width: 100px; height: 100px; background-color: var(--accent-blue); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #000; font-weight: bold;">
+            {{ request.user.username|make_list|first|upper }}
+        </div>
+        <h2 style="margin: 0 0 10px 0;">{{ request.user.username }}</h2>
+        <p style="color: var(--text-secondary); margin: 0 0 5px 0;">{{ request.user.email|default:"Sem e-mail cadastrado" }}</p>
+        <span style="display: inline-block; background-color: rgba(20, 184, 166, 0.1); color: var(--accent-blue); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; margin-bottom: 20px;">
+            {{ request.user.get_role_display }}
+        </span>
+        <hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 20px;">
+        <div style="text-align: left; color: var(--text-secondary); font-size: 0.9rem;">
+            <p><strong>Empresa:</strong> {{ request.user.company.name|default:"Global" }}</p>
+            <p><strong>Membro desde:</strong> {{ request.user.date_joined|date:"d M Y" }}</p>
+        </div>
+    </div>
+
+    <!-- Tabela de Contribuições -->
+    <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem;">Minhas Contribuições</h2>
+        
+        {% if articles %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Título</th>
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Categoria</th>
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Status</th>
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Última Edição</th>
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for article in articles %}
+                    <tr style="border-bottom: 1px solid var(--table-border);">
+                        <td style="padding: 15px;">{{ article.title }}</td>
+                        <td style="padding: 15px; color: var(--text-secondary);">{{ article.category.name|default:"Sem Categoria" }}</td>
+                        <td style="padding: 15px;">
+                            {% if article.status == 'APPROVED' %}
+                            <span style="color: #14B8A6; font-size: 0.85rem; font-weight: 500;">Aprovado</span>
+                            {% elif article.status == 'PENDING' %}
+                            <span style="color: #F59E0B; font-size: 0.85rem; font-weight: 500;">Pendente</span>
+                            {% elif article.status == 'REJECTED' %}
+                            <span style="color: #EF4444; font-size: 0.85rem; font-weight: 500;">Rejeitado</span>
+                            {% else %}
+                            <span style="color: #94A3B8; font-size: 0.85rem; font-weight: 500;">Rascunho</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 15px; color: var(--text-secondary); font-size: 0.9rem;">{{ article.updated_at|date:"d/m/Y H:i" }}</td>
+                        <td style="padding: 15px; text-align: right;">
+                            <a href="{% url 'article_update' article.slug %}" style="background-color: transparent; border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;">Editar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px 0;">Você ainda não possui contribuições. <br><br> <a href="{% url 'article_create' %}" class="btn-primary" style="text-decoration: none; display: inline-block; margin-top: 10px;">Criar Artigo</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

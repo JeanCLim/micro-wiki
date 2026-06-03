@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Seguro | Micro-Wiki</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body class="login-body">
+    {% include 'loader.html' %}
+    <div class="gateway-container">
+        <div class="login-header">
+            <h2>Gateway da Empresa</h2>
+            <p>Identifique sua organização para prosseguir</p>
+        </div>
+        
+        {% if error %}
+        <div class="login-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'gateway' %}" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-group">
+                <div class="input-wrapper">
+                    <span class="input-icon">🏢</span>
+                    <input type="text" name="company_code" placeholder="Código ou Domínio da Empresa" required style="font-size: 1.1rem; padding-left: 40px; height: 50px;" autocomplete="off">
+                </div>
+            </div>
+            <button type="submit" class="btn-primary btn-block" style="height: 50px;">Avançar</button>
+        </form>
+    </div>
+</body>
+</html>

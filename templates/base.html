@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Micro-Wiki Ágil{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script>
+        // Apply theme immediately to prevent flashing
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body>
+    {% include 'loader.html' %}
+    <header>
+        <div class="top-nav">
+            <div class="nav-left">
+                {% if request.user.role == 'SUPERADMIN' and not request.user.company %}
+                <a href="{% url 'master_admin' %}" class="logo"><span class="logo-icon">👑</span> Master Global</a>
+                {% else %}
+                <a href="{% url 'home' %}" class="logo"><span class="logo-icon">🗂️</span> MicroWiki</a>
+                {% endif %}
+            </div>
+            <div class="nav-center">
+                {% if not request.user.role == 'SUPERADMIN' or request.user.company %}
+                <form action="{% url 'search' %}" method="get" class="search-form-mini">
+                    <input type="text" name="q" placeholder="Pesquisar..." value="{{ query }}">
+                </form>
+                {% endif %}
+            </div>
+            <div class="nav-right">
+                {% if not request.user.role == 'SUPERADMIN' or request.user.company %}
+                <a href="{% url 'article_create' %}" class="btn-create">Criar</a>
+                {% endif %}
+                
+                <button id="theme-toggle" onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-right: 15px;">🌞</button>
+
+                {% if not request.user.role == 'SUPERADMIN' or request.user.company %}
+                <div class="notification-dropdown">
+                    <button class="notification-btn" id="notif-btn" onclick="toggleNotifications(event)">
+                        <span class="icon">🔔</span>
+                        <span class="badge" id="notif-badge" style="display:none;">0</span>
+                    </button>
+                    <div class="notif-content" id="notif-content">
+                        <div class="notif-tabs">
+                            <button class="notif-tab active" onclick="switchNotifTab('approvals')">Aprovações</button>
+                            <button class="notif-tab" onclick="switchNotifTab('systems')">Sistema</button>
+                        </div>
+                        <div class="notif-pane active" id="pane-approvals">
+                            Carregando...
+                        </div>
+                        <div class="notif-pane" id="pane-systems" style="display:none;">
+                            Carregando...
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="profile-dropdown">
+                    <button class="profile-btn" onclick="toggleProfileMenu(event)">
+                        <span class="avatar">👤</span>
+                        <span class="username">{{ request.user.username|default:"Conta" }}</span>
+                    </button>
+                    <div class="dropdown-content" id="profile-dropdown-content">
+                        <a href="{% url 'profile' %}">Minha Conta</a>
+                        {% if request.user.role == 'ADMIN' or request.user.role == 'SUPERADMIN' %}
+                        <a href="{% url 'settings' %}">Configurações</a>
+                        {% endif %}
+                        <a href="{% url 'logout' %}" style="color: #ef4444;">Sair</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>Base de Conhecimento</h3>
+            </div>
+            <div class="sidebar-content">
+                <ul class="sidebar-tree">
+                    {% for cat in sidebar_categories %}
+                    <li>
+                        <details open>
+                            <summary><span class="icon">📁</span> {{ cat.name }}</summary>
+                            <ul>
+                                {% for art in cat.articles.all %}
+                                    {% if art.status == 'APPROVED' %}
+                                        <li><a href="{% url 'article_detail' art.slug %}"><span class="icon">📄</span> {{ art.title }}</a></li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </details>
+                    </li>
+                    {% empty %}
+                    <li>Nenhuma categoria.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleProfileMenu(e) {
+            e.stopPropagation();
+            const content = document.getElementById('profile-dropdown-content');
+            content.classList.toggle('show');
+            // Close notif if open
+            document.getElementById('notif-content').style.display = 'none';
+        }
+
+        function toggleNotifications(e) {
+            if(e) e.stopPropagation();
+            const content = document.getElementById('notif-content');
+            const isBlock = content.style.display === 'block';
+            content.style.display = isBlock ? 'none' : 'block';
+            if(!isBlock) {
+                fetchNotifications();
+            }
+            // Close profile if open
+            const prof = document.getElementById('profile-dropdown-content');
+            if(prof) prof.classList.remove('show');
+        }
+
+
+        function switchNotifTab(tab) {
+            document.querySelectorAll('.notif-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.notif-pane').forEach(p => p.style.display = 'none');
+            
+            if (tab === 'approvals') {
+                document.querySelectorAll('.notif-tab')[0].classList.add('active');
+                document.getElementById('pane-approvals').style.display = 'block';
+            } else {
+                document.querySelectorAll('.notif-tab')[1].classList.add('active');
+                document.getElementById('pane-systems').style.display = 'block';
+            }
+        }
+
+        function fetchNotifications() {
+            fetch('/api/notifications/')
+                .then(r => r.json())
+                .then(data => {
+                    const count = data.approvals.length;
+                    const badge = document.getElementById('notif-badge');
+                    if(count > 0) {
+                        badge.style.display = 'inline-block';
+                        badge.innerText = count;
+                    } else {
+                        badge.style.display = 'none';
+                    }
+
+                    const appPane = document.getElementById('pane-approvals');
+                    if(data.approvals.length > 0) {
+                        appPane.innerHTML = data.approvals.map(a => 
+                            `<div class="notif-item">
+                                <a href="${a.url}">${a.author} enviou '${a.title}' para aprovação</a>
+                                <small>${a.date}</small>
+                            </div>`
+                        ).join('');
+                    } else {
+                        appPane.innerHTML = '<p class="notif-empty">Nenhuma aprovação pendente.</p>';
+                    }
+
+                    const sysPane = document.getElementById('pane-systems');
+                    if(data.systems.length > 0) {
+                        sysPane.innerHTML = data.systems.map(s => 
+                            `<div class="notif-item">
+                                <strong>Update ${s.version}: ${s.title}</strong>
+                                <p>${s.message}</p>
+                                <small>${s.date}</small>
+                            </div>`
+                        ).join('');
+                    } else {
+                        sysPane.innerHTML = '<p class="notif-empty">Nenhuma atualização recente.</p>';
+                    }
+                });
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const toggleBtn = document.getElementById('theme-toggle');
+            if (currentTheme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                toggleBtn.innerText = '🌙';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                toggleBtn.innerText = '🌞';
+            }
+        }
+        
+        // Fetch initially
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchNotifications();
+            // Set initial icon
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            document.getElementById('theme-toggle').innerText = currentTheme === 'dark' ? '🌞' : '🌙';
+        });
+
+        // Close dropdowns if clicked outside
+        window.onclick = function(event) {
+            if (!event.target.closest('.profile-dropdown')) {
+                const prof = document.getElementById('profile-dropdown-content');
+                if (prof && prof.classList.contains('show')) {
+                    prof.classList.remove('show');
+                }
+            }
+            if (!event.target.closest('.notification-dropdown')) {
+                const notif = document.getElementById('notif-content');
+                if (notif && notif.style.display === 'block') {
+                    notif.style.display = 'none';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

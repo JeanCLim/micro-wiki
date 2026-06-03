@@ -1,0 +1,22 @@
+# Ambientes Virtuais Python
+venv/
+env/
+.venv/
+
+# Variáveis de Ambiente e Segredos (MUITO IMPORTANTE NÃO SUBIR ISSO)
+.env
+.env.local
+
+# Bancos de Dados Locais
+*.sqlite3
+db.sqlite3
+
+# Arquivos de Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Arquivos de IDE (VSCode, PyCharm, etc)
+.vscode/
+.idea/
+.DS_Store

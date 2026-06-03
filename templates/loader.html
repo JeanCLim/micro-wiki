@@ -1,0 +1,28 @@
+<!-- Global Loader Snippet -->
+<div id="global-loader">
+    <div class="spinner"></div>
+    <div class="loader-text">Carregando...</div>
+</div>
+
+<script>
+    // Hide loader when the page finishes loading
+    window.addEventListener('load', function() {
+        const loader = document.getElementById('global-loader');
+        if (loader) {
+            loader.classList.add('hidden');
+            // Remove from DOM after transition
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 400); // 400ms is the CSS transition duration
+        }
+    });
+
+    // Show loader on page unload (when clicking links or submitting forms)
+    window.addEventListener('beforeunload', function() {
+        const loader = document.getElementById('global-loader');
+        if (loader) {
+            loader.style.display = 'flex';
+            loader.classList.remove('hidden');
+        }
+    });
+</script>
