@@ -62,6 +62,11 @@ class Article(models.Model):
         ('APPROVED', 'Aprovado'),
         ('REJECTED', 'Rejeitado'),
     )
+    VISIBILITY_CHOICES = (
+        ('PUBLIC', 'Público'),
+        ('INTERNAL_ONLY', 'Apenas Interno'),
+        ('MANAGERS_ONLY', 'Apenas Gestores'),
+    )
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
     content = models.TextField()
@@ -69,6 +74,7 @@ class Article(models.Model):
     tags = models.ManyToManyField(Tag, blank=True, related_name='articles')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='articles')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='DRAFT')
+    visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='PUBLIC')
     version = models.CharField(max_length=20, default="01", blank=True)
     valid_until = models.DateField(null=True, blank=True)
     changes_summary = models.CharField(max_length=200, blank=True)

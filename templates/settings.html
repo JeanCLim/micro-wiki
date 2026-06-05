@@ -38,11 +38,11 @@
                 <input type="hidden" name="action" value="update_company">
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Nome da Empresa</label>
-                    <input type="text" name="name" value="{{ company.name }}" style="width: 100%; padding: 12px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;">
+                    <input type="text" name="name" value="{{ company.name }}" style="width: 100%; padding: 12px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;" autocomplete="off">
                 </div>
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Domínio (Opcional)</label>
-                    <input type="text" name="domain" value="{{ company.domain }}" placeholder="ex: meudominio.com" style="width: 100%; padding: 12px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;">
+                    <input type="text" name="domain" value="{{ company.domain }}" placeholder="ex: meudominio.com" style="width: 100%; padding: 12px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;" autocomplete="off">
                 </div>
                 <button type="submit" class="btn-primary" style="padding: 10px 20px;">Salvar Alterações</button>
             </form>
@@ -170,9 +170,9 @@
     <h3 style="margin-top: 0; margin-bottom: 15px;">Convidar Usuário</h3>
     <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">A senha padrão gerada será <b>changeme123</b>.</p>
     
-    <input type="text" id="new-user-name" placeholder="Nome de Usuário (Username)" style="width: 100%; padding: 8px; margin-bottom: 10px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+    <input type="text" id="new-user-name" placeholder="Nome de Usuário (Username)" style="width: 100%; padding: 8px; margin-bottom: 10px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;" autocomplete="off">
     
-    <input type="email" id="new-user-email" placeholder="E-mail" style="width: 100%; padding: 8px; margin-bottom: 10px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+    <input type="email" id="new-user-email" placeholder="E-mail" style="width: 100%; padding: 8px; margin-bottom: 10px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;" autocomplete="off">
     
     <select id="new-user-role" style="width: 100%; padding: 8px; margin-bottom: 20px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
         <option value="COMMON">Usuário Comum (Leitor)</option>

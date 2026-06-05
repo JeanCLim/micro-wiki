@@ -241,13 +241,13 @@
         <input type="hidden" name="action" value="create_company">
         
         <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Nome Fantasia</label>
-        <input type="text" name="name" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        <input type="text" name="name" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;" autocomplete="off">
         
         <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">CNPJ ou Identificador Único</label>
-        <input type="text" name="cnpj" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        <input type="text" name="cnpj" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;" autocomplete="off">
         
         <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Domínio de Email (Opcional)</label>
-        <input type="text" name="domain" placeholder="ex: empresa.com.br" style="width: 100%; padding: 10px; margin-bottom: 25px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        <input type="text" name="domain" placeholder="ex: empresa.com.br" style="width: 100%; padding: 10px; margin-bottom: 25px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;" autocomplete="off">
         
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
             <button type="button" onclick="document.getElementById('modal-company').close()" style="background: transparent; color: var(--text-secondary); border: none; cursor: pointer; padding: 8px;">Cancelar</button>
@@ -264,7 +264,7 @@
         <input type="hidden" name="action" value="inject_category">
         
         <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Nome da Categoria</label>
-        <input type="text" name="name" required placeholder="ex: Políticas de Privacidade SaaS" style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        <input type="text" name="name" required placeholder="ex: Políticas de Privacidade SaaS" style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;" autocomplete="off">
         
         <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Alvo da Injeção</label>
         <select name="target" style="width: 100%; padding: 10px; margin-bottom: 25px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">

@@ -2,54 +2,81 @@
 {% block title %}{% if article %}Editar Artigo{% else %}Novo Artigo{% endif %} | Micro-Wiki{% endblock %}
 
 {% block content %}
-<div class="content-box">
+<div class="editor-container" style="background-color: var(--bg-surface); padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid var(--border-color); margin: 40px auto; max-width: 900px;">
     <div class="header" style="margin-bottom: 2rem;">
         <h1>{% if article %}Editar Artigo{% else %}Criar Novo Artigo{% endif %}</h1>
     </div>
 
-    <div class="form-group">
-        <label>Título do Artigo</label>
-        <input type="text" id="article-title" placeholder="Escreva o título aqui..." value="{{ article.title|default:'' }}">
+    <div class="form-group" style="margin-bottom: 2rem;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">Título do Artigo</label>
+        <input type="text" id="article-title" class="soft-input" style="height: 48px;" placeholder="Escreva o título aqui..." value="{{ article.title|default:'' }}" autocomplete="off">
     </div>
 
-    <div class="form-row">
-        <div class="form-group half-width">
-            <label>Categoria</label>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <select id="article-category" style="flex: 1;">
+    <div class="form-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: end; margin-bottom: 24px;">
+        <div class="form-group" style="margin: 0;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">Categoria</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="article-category" class="soft-input" style="flex: 1; margin: 0; appearance: auto;">
                     <option value="" disabled {% if not article %}selected{% endif %}>Selecione uma categoria</option>
                     {% for cat in categories %}
                     <option value="{{ cat.id }}" {% if article.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                     {% endfor %}
                 </select>
-                <button type="button" onclick="document.getElementById('category-modal').showModal()" style="background-color: var(--accent-blue); border: none; color: #000; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1.2rem; font-weight: bold; display: flex; justify-content: center; align-items: center;">+</button>
+                <button type="button" onclick="document.getElementById('category-modal').showModal()" style="background-color: var(--accent-blue); border: none; color: #000; border-radius: 6px; width: 48px; height: 48px; flex-shrink: 0; cursor: pointer; font-size: 1.5rem; font-weight: bold; display: flex; justify-content: center; align-items: center; transition: background-color 0.2s;">+</button>
             </div>
         </div>
-        <div class="form-group half-width">
-            <label>Tags (separadas por vírgula)</label>
-            <input type="text" id="article-tags" placeholder="ex: rede, internet, roteador" value="{% if article %}{{ article.tags.all|join:', ' }}{% endif %}">
+        <div class="form-group" style="margin: 0;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">Tags</label>
+            <input type="text" id="article-tags" class="soft-input" style="margin: 0;" placeholder="ex: rede, internet, roteador" value="{% if article %}{{ article.tags.all|join:', ' }}{% endif %}" autocomplete="off">
         </div>
+        <div class="form-group" style="margin: 0;">
+            <label style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                Visibilidade
+            </label>
+            <select id="article-visibility" class="soft-input" style="margin: 0; appearance: auto;">
+                <option value="PUBLIC" {% if article and article.visibility == 'PUBLIC' %}selected{% endif %}>Público</option>
+                <option value="INTERNAL_ONLY" {% if article and article.visibility == 'INTERNAL_ONLY' %}selected{% endif %}>Apenas Interno</option>
+                <option value="MANAGERS_ONLY" {% if article and article.visibility == 'MANAGERS_ONLY' %}selected{% endif %}>Apenas Gestores</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 2rem;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">Conteúdo</label>
+        <div id="quill-editor" style="height: 400px; background-color: var(--input-bg); border: none; border-radius: 6px; color: var(--text-primary); font-family: inherit;">{{ article.content|safe }}</div>
     </div>
 
     <div class="form-group">
-        <label>Conteúdo</label>
-        <!-- Quill Editor Container -->
-        <div id="quill-editor" style="height: 400px; background-color: var(--bg-sidebar); border: 1px solid var(--border-color); color: var(--text-primary);">{{ article.content|safe }}</div>
+        <div class="dropzone" id="dropzone">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 48px; height: 48px; margin-bottom: 10px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            <p><strong>Arraste e solte arquivos aqui</strong> ou clique para procurar anexos.</p>
+            <p style="font-size: 0.85rem; opacity: 0.7;">Anexe PDFs, imagens ou scripts que complementam o artigo.</p>
+            <input type="file" id="file-input" multiple style="display: none;">
+        </div>
+        <div class="file-grid" id="file-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;"></div>
     </div>
 
-    <div class="editor-actions">
-        <button class="btn-secondary" onclick="submitArticle('draft')" style="background: transparent; color: var(--text-primary); border: 1px solid var(--border-color); padding: 12px; border-radius: 6px;">Salvar como Rascunho</button>
+    <div class="editor-actions" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-outline" type="button" onclick="openPreview()">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                Visualizar
+            </button>
+            <button class="btn-outline" type="button" onclick="submitArticle('draft')">Salvar como Rascunho</button>
+        </div>
+        
         {% if request.user.role == 'ADMIN' or request.user.role == 'SUPERADMIN' %}
-        <button class="btn-primary" onclick="submitArticle('publish')">{% if article %}Atualizar e Publicar{% else %}Publicar Agora{% endif %}</button>
+        <button class="btn-primary" onclick="submitArticle('publish')" style="padding: 12px 32px; font-size: 1.05rem;">{% if article %}Atualizar e Publicar{% else %}Publicar Agora{% endif %}</button>
         {% else %}
-        <button class="btn-primary" onclick="submitArticle('pending')">Enviar para Aprovação</button>
+        <button class="btn-primary" onclick="submitArticle('pending')" style="padding: 12px 32px; font-size: 1.05rem;">Enviar para Aprovação</button>
         {% endif %}
     </div>
 </div>
 
 <dialog id="category-modal" style="margin: auto; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 300px;">
     <h3 style="margin-top: 0; margin-bottom: 15px;">Nova Categoria</h3>
-    <input type="text" id="new-category-name" placeholder="Nome da Categoria" style="width: 100%; padding: 8px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+    <input type="text" id="new-category-name" class="soft-input" placeholder="Nome da Categoria" style="margin-bottom: 15px; border: 1px solid var(--border-color) !important;" autocomplete="off">
     
     {% if request.user.role == 'ADMIN' or request.user.role == 'SUPERADMIN' %}
     <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 0.9rem; color: var(--text-secondary); cursor: pointer;">
@@ -64,8 +91,36 @@
     </div>
 </dialog>
 
+<dialog id="preview-modal" style="margin: auto; padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 90%; max-width: 800px; max-height: 85vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <button type="button" onclick="document.getElementById('preview-modal').close()" style="background: transparent; color: var(--text-secondary); border: none; cursor: pointer; font-size: 1.5rem; transition: color 0.2s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">&times;</button>
+    </div>
+    <div id="preview-header"></div>
+    <div id="preview-content" class="ql-editor" style="padding: 0; line-height: 1.7; font-size: 1.1rem; color: var(--text-primary);"></div>
+    <div id="preview-media"></div>
+</dialog>
+
 <!-- Include Quill JS -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+    /* Quill Editor Overrides */
+    .ql-toolbar.ql-snow {
+        border: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        background-color: var(--bg-surface);
+        border-radius: 6px 6px 0 0;
+    }
+    .ql-container.ql-snow {
+        border: none !important;
+    }
+    .ql-editor {
+        font-family: inherit;
+        font-size: 1rem;
+    }
+    .ql-snow .ql-stroke { stroke: var(--text-primary); }
+    .ql-snow .ql-fill { fill: var(--text-primary); }
+    .ql-snow .ql-picker { color: var(--text-primary); }
+</style>
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <script>
@@ -118,10 +173,116 @@
         }
     });
 
+    function openPreview() {
+        const title = document.getElementById('article-title').value || 'Sem Título';
+        document.getElementById('preview-header').innerHTML = `<h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 24px;">${title}</h1>`;
+        
+        const content = quill.root.innerHTML;
+        document.getElementById('preview-content').innerHTML = content;
+        
+        const mediaContainer = document.getElementById('preview-media');
+        mediaContainer.innerHTML = '';
+        
+        uploadedFiles.forEach(item => {
+            const ext = item.file.name.split('.').pop().toLowerCase();
+            const fileUrl = URL.createObjectURL(item.file);
+            
+            let mediaTag = '';
+            if (['mp4', 'mov', 'avi'].includes(ext)) {
+                mediaTag = `<video controls style="width: 100%; max-height: 500px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: #000;" src="${fileUrl}"></video>`;
+            } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                mediaTag = `<img style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" src="${fileUrl}" />`;
+            }
+
+            if (mediaTag) {
+                const captionHtml = item.caption ? `<figcaption style="font-size: 1.25rem; font-weight: 600; color: var(--text-color); border-left: 4px solid #14B8A6; padding-left: 12px;">${item.caption}</figcaption>` : '';
+                mediaContainer.innerHTML += `<figure style="margin: 32px 0; display: flex; flex-direction: column; gap: 12px;">${captionHtml}${mediaTag}</figure>`;
+            }
+        });
+
+        document.getElementById('preview-modal').showModal();
+    }
+
+    // Drag and Drop Logic
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const fileList = document.getElementById('file-list');
+    let uploadedFiles = [];
+
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            handleFiles(e.dataTransfer.files);
+        }
+    });
+
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        if (['mp4', 'mov', 'avi'].includes(ext)) return '🎥';
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '🖼️';
+        if (['pdf'].includes(ext)) return '📄';
+        if (['zip', 'rar'].includes(ext)) return '📦';
+        if (['py', 'js', 'html', 'css'].includes(ext)) return '💻';
+        return '📎';
+    }
+
+    function handleFiles(files) {
+        for (let i = 0; i < files.length; i++) {
+            uploadedFiles.push({ file: files[i], caption: '' });
+        }
+        renderFileList();
+    }
+
+    function removeFile(index) {
+        uploadedFiles.splice(index, 1);
+        renderFileList();
+    }
+
+    function updateCaption(index, value) {
+        uploadedFiles[index].caption = value;
+    }
+
+    function renderFileList() {
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((item, index) => {
+            const icon = getFileIcon(item.file.name);
+            const fileItem = document.createElement('div');
+            fileItem.style.cssText = 'background-color: var(--bg-main); border-radius: 8px; padding: 12px; display: flex; align-items: flex-start; justify-content: space-between; border: 1px solid var(--border-color); flex-direction: row; gap: 12px;';
+            fileItem.innerHTML = `
+                <div style="font-size: 1.5rem; display: flex; align-items: center; justify-content: center; height: 100%;">${icon}</div>
+                <div style="display: flex; flex-direction: column; gap: 6px; overflow: hidden; flex: 1;">
+                    <span style="font-size: 0.75rem; color: #64748B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${item.file.name}">${item.file.name}</span>
+                    <input type="text" class="file-caption-input" placeholder="Digite um título para este anexo..." value="${item.caption}" oninput="updateCaption(${index}, this.value)" style="border: none; border-bottom: 1px solid #CBD5E1; background: transparent; color: var(--text-primary); font-size: 0.9rem; padding: 4px 0; outline: none; transition: border-color 0.2s; width: 100%; font-family: inherit;" onfocus="this.style.borderColor='#14B8A6'" onblur="this.style.borderColor='#CBD5E1'">
+                </div>
+                <button type="button" onclick="removeFile(${index})" style="background: none; border: none; cursor: pointer; color: #ef4444; flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#fee2e2'" onmouseout="this.style.backgroundColor='transparent'">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            `;
+            fileList.appendChild(fileItem);
+        });
+    }
+
     function submitArticle(action) {
         const title = document.getElementById('article-title').value;
         const category = document.getElementById('article-category').value;
         const tags = document.getElementById('article-tags').value;
+        const visibility = document.getElementById('article-visibility').value;
         const content = quill.root.innerHTML;
 
         if(!title || !category || quill.getText().trim().length === 0) {
@@ -133,9 +294,16 @@
         formData.append('title', title);
         formData.append('category', category);
         formData.append('tags', tags);
+        formData.append('visibility', visibility);
         formData.append('content', content);
         formData.append('action', action);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        
+        uploadedFiles.forEach((item, index) => {
+            formData.append(`file_${index}`, item.file);
+            formData.append(`caption_${index}`, item.caption);
+        });
+        formData.append('file_count', uploadedFiles.length);
 
         const postUrl = "{% if article %}{% url 'article_update' article.slug %}{% else %}{% url 'article_create' %}{% endif %}";
 

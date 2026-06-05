@@ -6,7 +6,7 @@
     <title>{% block title %}Micro-Wiki Ágil{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=4">
     <script>
         // Apply theme immediately to prevent flashing
         const savedTheme = localStorage.getItem('theme') || 'light';
@@ -21,15 +21,15 @@
         <div class="top-nav">
             <div class="nav-left">
                 {% if request.user.role == 'SUPERADMIN' and not request.user.company %}
-                <a href="{% url 'master_admin' %}" class="logo"><span class="logo-icon">👑</span> Master Global</a>
+                <a href="{% url 'master_admin' %}" class="logo"><span class="logo-icon"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></span> Master Global</a>
                 {% else %}
-                <a href="{% url 'home' %}" class="logo"><span class="logo-icon">🗂️</span> MicroWiki</a>
+                <a href="{% url 'home' %}" class="logo"><span class="logo-icon"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></span> MicroWiki</a>
                 {% endif %}
             </div>
             <div class="nav-center">
                 {% if not request.user.role == 'SUPERADMIN' or request.user.company %}
                 <form action="{% url 'search' %}" method="get" class="search-form-mini">
-                    <input type="text" name="q" placeholder="Pesquisar..." value="{{ query }}">
+                    <input type="text" name="q" placeholder="Pesquisar..." value="{{ query }}" autocomplete="off">
                 </form>
                 {% endif %}
             </div>
@@ -38,12 +38,12 @@
                 <a href="{% url 'article_create' %}" class="btn-create">Criar</a>
                 {% endif %}
                 
-                <button id="theme-toggle" onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-right: 15px;">🌞</button>
+                <button id="theme-toggle" onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; color: var(--text-primary); margin-right: 15px; display: flex; align-items: center;"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></button>
 
                 {% if not request.user.role == 'SUPERADMIN' or request.user.company %}
                 <div class="notification-dropdown">
                     <button class="notification-btn" id="notif-btn" onclick="toggleNotifications(event)">
-                        <span class="icon">🔔</span>
+                        <span class="icon"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg></span>
                         <span class="badge" id="notif-badge" style="display:none;">0</span>
                     </button>
                     <div class="notif-content" id="notif-content">
@@ -63,7 +63,7 @@
 
                 <div class="profile-dropdown">
                     <button class="profile-btn" onclick="toggleProfileMenu(event)">
-                        <span class="avatar">👤</span>
+                        <span class="avatar"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></span>
                         <span class="username">{{ request.user.username|default:"Conta" }}</span>
                     </button>
                     <div class="dropdown-content" id="profile-dropdown-content">
@@ -88,11 +88,11 @@
                     {% for cat in sidebar_categories %}
                     <li>
                         <details open>
-                            <summary><span class="icon">📁</span> {{ cat.name }}</summary>
+                            <summary><span class="icon"><svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></span> {{ cat.name }}</summary>
                             <ul>
                                 {% for art in cat.articles.all %}
                                     {% if art.status == 'APPROVED' %}
-                                        <li><a href="{% url 'article_detail' art.slug %}"><span class="icon">📄</span> {{ art.title }}</a></li>
+                                        <li><a href="{% url 'article_detail' art.slug %}"><span class="icon"><svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></span> {{ art.title }}</a></li>
                                     {% endif %}
                                 {% endfor %}
                             </ul>
@@ -191,14 +191,16 @@
         function toggleTheme() {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const toggleBtn = document.getElementById('theme-toggle');
+            const sunIcon = `<svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
+            const moonIcon = `<svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>`;
             if (currentTheme === 'dark') {
                 document.documentElement.removeAttribute('data-theme');
                 localStorage.setItem('theme', 'light');
-                toggleBtn.innerText = '🌙';
+                toggleBtn.innerHTML = moonIcon;
             } else {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 localStorage.setItem('theme', 'dark');
-                toggleBtn.innerText = '🌞';
+                toggleBtn.innerHTML = sunIcon;
             }
         }
         
@@ -207,7 +209,9 @@
             fetchNotifications();
             // Set initial icon
             const currentTheme = document.documentElement.getAttribute('data-theme');
-            document.getElementById('theme-toggle').innerText = currentTheme === 'dark' ? '🌞' : '🌙';
+            const sunIcon = `<svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
+            const moonIcon = `<svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>`;
+            document.getElementById('theme-toggle').innerHTML = currentTheme === 'dark' ? sunIcon : moonIcon;
         });
 
         // Close dropdowns if clicked outside

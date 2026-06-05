@@ -201,6 +201,7 @@ class ArticleFrontendCreateView(LoginRequiredMixin, View):
         content = request.POST.get('content')
         category_id = request.POST.get('category')
         tags_raw = request.POST.get('tags', '')
+        visibility = request.POST.get('visibility', 'PUBLIC')
         action = request.POST.get('action') # 'draft' ou 'pending'
 
         if not title or not content or not category_id:
@@ -221,7 +222,8 @@ class ArticleFrontendCreateView(LoginRequiredMixin, View):
             content=content,
             category=category,
             author=request.user,
-            status=status
+            status=status,
+            visibility=visibility
         )
 
         if tags_raw:
@@ -406,6 +408,7 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
         content = request.POST.get('content')
         category_id = request.POST.get('category')
         tags_raw = request.POST.get('tags', '')
+        visibility = request.POST.get('visibility', 'PUBLIC')
         action = request.POST.get('action')
         
         if not title or not content or not category_id:
@@ -415,6 +418,7 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
         article.slug = slugify(title)
         article.content = content
         article.category_id = category_id
+        article.visibility = visibility
         
         status = 'DRAFT'
         if action == 'pending':
