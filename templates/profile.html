@@ -33,11 +33,11 @@
             <table style="width: 100%; border-collapse: collapse; text-align: left;">
                 <thead>
                     <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
-                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Título</th>
-                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Categoria</th>
-                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Status</th>
-                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Última Edição</th>
-                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); white-space: nowrap;">Título</th>
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); white-space: nowrap;">Categoria</th>
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); white-space: nowrap;">Status</th>
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); white-space: nowrap;">Última Edição</th>
+                        <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); text-align: right; white-space: nowrap;">Ação</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,7 +45,7 @@
                     <tr style="border-bottom: 1px solid var(--table-border);">
                         <td style="padding: 15px;">{{ article.title }}</td>
                         <td style="padding: 15px; color: var(--text-secondary);">{{ article.category.name|default:"Sem Categoria" }}</td>
-                        <td style="padding: 15px;">
+                        <td style="padding: 15px; white-space: nowrap;">
                             {% if article.status == 'APPROVED' %}
                             <span style="color: #14B8A6; font-size: 0.85rem; font-weight: 500;">Aprovado</span>
                             {% elif article.status == 'PENDING' %}
@@ -56,9 +56,9 @@
                             <span style="color: #94A3B8; font-size: 0.85rem; font-weight: 500;">Rascunho</span>
                             {% endif %}
                         </td>
-                        <td style="padding: 15px; color: var(--text-secondary); font-size: 0.9rem;">{{ article.updated_at|date:"d/m/Y H:i" }}</td>
-                        <td style="padding: 15px; text-align: right;">
-                            <a href="{% url 'article_update' article.slug %}" style="background-color: transparent; border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500;">Editar</a>
+                        <td style="padding: 15px; color: var(--text-secondary); font-size: 0.9rem; white-space: nowrap;">{{ article.updated_at|date:"d/m/Y H:i" }}</td>
+                        <td style="padding: 15px; text-align: right; white-space: nowrap;">
+                            <a href="{% url 'article_update' article.slug %}" style="background-color: transparent; border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem; font-weight: 500; white-space: nowrap; display: inline-block;">Editar</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -70,4 +70,5 @@
         {% endif %}
     </div>
 </div>
+
 {% endblock %}

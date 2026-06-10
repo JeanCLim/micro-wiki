@@ -1,167 +1,601 @@
 {% extends 'base.html' %}
-{% block title %}Configurações | Micro-Wiki{% endblock %}
+{% block title %}Configurações da Conta | Micro-Wiki{% endblock %}
 
 {% block content %}
-<div class="header" style="margin-bottom: 2rem;">
-    <h1>Configurações do Sistema</h1>
-    <p style="color: var(--text-secondary);">Painel Administrativo do Workspace</p>
-</div>
+<style>
+/* Sidebar Interna Escura (Estilo do Print) */
+.settings-sidebar {
+    background-color: #0F172A;
+    border-radius: 12px;
+    padding-bottom: 20px;
+    overflow: hidden;
+    color: #F8FAFC;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
 
-<div style="display: grid; grid-template-columns: 250px 1fr; gap: 30px; min-height: 60vh;">
-    <!-- Sidebar Interna -->
-    <div style="display: flex; flex-direction: column; justify-content: space-between; background-color: var(--bg-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
-        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
-            <li><button class="settings-tab active" onclick="showSettingsTab('geral')" style="width: 100%; text-align: left; padding: 12px 15px; background: rgba(20, 184, 166, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue); border-radius: 6px; cursor: pointer; font-weight: 500;">⚙️ Geral</button></li>
-            <li><button class="settings-tab" onclick="showSettingsTab('usuarios')" style="width: 100%; text-align: left; padding: 12px 15px; background: transparent; color: var(--text-secondary); border: 1px solid transparent; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">👥 Usuários</button></li>
-            <li><button class="settings-tab" onclick="showSettingsTab('categorias')" style="width: 100%; text-align: left; padding: 12px 15px; background: transparent; color: var(--text-secondary); border: 1px solid transparent; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">📂 Categorias</button></li>
-        </ul>
-        
-        <div style="margin-top: 30px;">
-            <hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 15px;">
-            <a href="{% url 'logout' %}" class="logout-minimalist" style="display: block; width: 100%; text-align: left; padding: 8px 10px; color: var(--text-secondary); font-weight: 500; text-decoration: none; transition: color 0.2s;">🚪 Sair</a>
-            <style>
-                .logout-minimalist:hover { color: #ef4444 !important; }
-                .activity-row { background-color: rgba(255, 255, 255, 0.02); }
-                .activity-btn:hover { background-color: rgba(20, 184, 166, 0.1); border-radius: 4px; }
-            </style>
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #14B8A6;
+    background-color: rgba(0,0,0,0.2);
+    margin-bottom: 10px;
+}
+
+.settings-group-header {
+    margin: 15px 20px 5px 20px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #64748B;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+.settings-tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    color: #94A3B8;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.settings-tab:hover {
+    background: rgba(255,255,255,0.05);
+    color: #F8FAFC;
+}
+
+.settings-tab.active {
+    border-left: 3px solid #14B8A6;
+    color: #14B8A6;
+    background: rgba(20, 184, 166, 0.1);
+}
+
+/* Área Principal (White Card) */
+.settings-white-card {
+    background-color: var(--bg-surface);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    width: 100%;
+    padding: 30px;
+    color: var(--text-primary);
+}
+
+.settings-white-card h2 {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    margin-top: 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 30px;
+}
+
+/* User Header Profile */
+.user-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: var(--bg-main);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.profile-avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--accent-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 24px;
+}
+.profile-avatar-large img { width: 100%; height: 100%; object-fit: cover; }
+.profile-info h3 { margin: 0 0 5px 0; font-size: 1.2rem; color: var(--text-primary); }
+.profile-info p { margin: 0; font-size: 0.9rem; color: var(--text-secondary); }
+
+/* Overrides para manter a consistência dos forms dentro do card */
+.settings-card { border: none; padding: 0; box-shadow: none; background: transparent; margin-bottom: 40px; }
+.settings-row { padding: 15px 0; border-bottom: 1px solid var(--border-color); }
+.settings-row:last-child { border-bottom: none; }
+</style>
+
+<div style="display: grid; grid-template-columns: 250px 1fr; gap: 30px; min-height: 70vh;">
+    <!-- Sidebar Interna Escura -->
+    <div class="settings-sidebar">
+        <div class="sidebar-logo">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            Configurações
         </div>
+        
+        <div class="settings-group-header">Workspace</div>
+        <button class="settings-tab active" onclick="showSettingsTab('geral')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Minha Conta
+        </button>
+        <button class="settings-tab" onclick="showSettingsTab('branding')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            Aparência & Branding
+        </button>
+
+        <div class="settings-group-header">Organização</div>
+        <button class="settings-tab" onclick="showSettingsTab('usuarios')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>
+            Usuários & Equipe
+        </button>
+        <button class="settings-tab" onclick="showSettingsTab('categorias')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"></path></svg>
+            Categorias
+        </button>
+        <button class="settings-tab" onclick="showSettingsTab('templates')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            Templates
+        </button>
+
+        <div class="settings-group-header">Sistema</div>
+        <button class="settings-tab" onclick="showSettingsTab('security')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            Segurança e Log
+        </button>
+        <button class="settings-tab" onclick="showSettingsTab('tutoriais')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Ajuda & Tutoriais
+        </button>
     </div>
 
-    <!-- Conteúdo das Abas -->
-    <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
-        
-        <!-- Aba: Geral -->
-        <div id="tab-geral" class="settings-pane" style="display: block;">
-            <h2 style="margin-top: 0; margin-bottom: 20px;">Informações do Workspace</h2>
-            <form method="POST">
+    <!-- Área Principal (White Card) -->
+    <div style="flex: 1;">
+        <div class="settings-white-card">
+            
+            <!-- User Profile Header -->
+            <div class="user-profile-header">
+                <div class="profile-avatar-large">
+                    {% if request.user.profile_picture %}
+                        <img src="{{ request.user.profile_picture.url }}" alt="User">
+                    {% else %}
+                        {{ request.user.username|make_list|first|upper }}
+                    {% endif %}
+                </div>
+                <div class="profile-info">
+                    <h3>{{ request.user.first_name }} {{ request.user.last_name }}</h3>
+                    {% if not request.user.first_name and not request.user.last_name %}<h3>{{ request.user.username }}</h3>{% endif %}
+                    <p>{{ request.user.get_role_display|default:"Suporte Analista" }}</p>
+                </div>
+            </div>
+
+            <!-- Abas Dinâmicas (Panes) -->
+<div id="tab-geral" class="settings-pane">
+            <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Geral</h2>
+            <div class="settings-card">
+                <h3>Informações da Empresa</h3>
+                <p>Detalhes básicos sobre o seu workspace e conta principal.</p>
+                
+                <form method="POST" action="{% url 'settings' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_company">
+                    
+                    <div class="settings-row">
+                        <div class="settings-row-info">
+                            <h4>Nome da Empresa</h4>
+                            <p>Nome exibido no painel e nos relatórios.</p>
+                        </div>
+                        <div class="settings-row-action" style="width: 300px;">
+                            <input type="text" name="name" value="{{ company.name }}" style="width: 100%; padding: 10px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div class="settings-row-info">
+                            <h4>Domínio (Opcional)</h4>
+                            <p>Domínio atrelado para convites automáticos.</p>
+                        </div>
+                        <div class="settings-row-action" style="width: 300px;">
+                            <input type="text" name="domain" value="{{ company.domain|default:'' }}" style="width: 100%; padding: 10px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row" style="justify-content: flex-end;">
+                        <button type="submit" class="btn-primary" style="padding: 10px 20px;">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Painel Aparência e Branding -->
+        <div id="tab-branding" class="settings-pane" style="display: none;">
+            <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Aparência & Branding</h2>
+            
+            <form method="POST" action="{% url 'settings' %}" enctype="multipart/form-data">
                 {% csrf_token %}
-                <input type="hidden" name="action" value="update_company">
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Nome da Empresa</label>
-                    <input type="text" name="name" value="{{ company.name }}" style="width: 100%; padding: 12px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;" autocomplete="off">
+                <input type="hidden" name="action" value="update_branding">
+                <div class="settings-card">
+                    <h3>Identidade Visual</h3>
+                    <p>Personalize as cores e logomarcas para refletir a sua marca institucional.</p>
+                    
+                    <div class="settings-row">
+                        <div class="settings-row-info">
+                            <h4>Logo da Aba (Favicon)</h4>
+                            <p>Ícone minúsculo da aba do navegador (.ico, .png, .svg).</p>
+                        </div>
+                        <div class="settings-row-action" style="width: 300px; display: flex; align-items: center; gap: 15px;">
+                            <div style="width: 50px; height: 50px; background-color: var(--bg-main); border: 1px dashed var(--border-color); border-radius: var(--border-radius-base); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                {% if settings.favicon %}
+                                <img src="{{ settings.favicon.url }}" alt="Favicon" style="width: 100%; height: 100%; object-fit: contain;">
+                                {% else %}
+                                <svg width="20" height="20" fill="none" stroke="var(--text-secondary)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                {% endif %}
+                            </div>
+                            <input type="file" name="favicon" accept="image/*" style="font-size: 0.85rem; width: 220px;">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div class="settings-row-info">
+                            <h4>Cor Primária (HEX)</h4>
+                            <p>Cor de destaque para botões e links principais.</p>
+                        </div>
+                        <div class="settings-row-action" style="width: 300px; display: flex; align-items: center; gap: 10px;">
+                            <input type="color" name="primary_color" class="color-swatch" value="{{ settings.primary_color|default:'#14B8A6' }}">
+                            <input type="text" value="{{ settings.primary_color|default:'#14B8A6' }}" style="flex: 1; padding: 10px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-family: monospace;" readonly>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Domínio (Opcional)</label>
-                    <input type="text" name="domain" value="{{ company.domain }}" placeholder="ex: meudominio.com" style="width: 100%; padding: 12px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;" autocomplete="off">
+
+                <div class="settings-card">
+                    <h3>Tipografia & Formas</h3>
+                    <p>Defina a densidade de conteúdo, formato dos botões e a família de fontes principal.</p>
+
+                    <div class="settings-row">
+                        <div class="settings-row-info">
+                            <h4>Família de Fontes</h4>
+                            <p>Estilo global de texto do Workspace.</p>
+                        </div>
+                        <div class="settings-row-action" style="width: 300px;">
+                            <select name="font_family" style="width: 100%; padding: 10px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--border-radius-base);">
+                                <option value="MODERN" {% if settings.font_family == 'MODERN' %}selected{% endif %}>Modern (Inter, sem serifa)</option>
+                                <option value="CLASSIC" {% if settings.font_family == 'CLASSIC' %}selected{% endif %}>Classic (Merriweather, com serifa)</option>
+                                <option value="TECHNICAL" {% if settings.font_family == 'TECHNICAL' %}selected{% endif %}>Technical (Fira Code, monoespaçada)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="settings-row-info">
+                            <h4>Estilo de Bordas</h4>
+                            <p>Nível de arredondamento das interfaces e botões.</p>
+                        </div>
+                        <div class="settings-row-action" style="width: 300px; display: flex; gap: 10px;">
+                            <label style="flex: 1; text-align: center; border: 1px solid var(--border-color); padding: 8px; cursor: pointer; border-radius: 4px; {% if settings.border_style == 'SHARP' %}background: rgba(20, 184, 166, 0.1); border-color: var(--accent-blue);{% endif %}">
+                                <input type="radio" name="border_style" value="SHARP" {% if settings.border_style == 'SHARP' %}checked{% endif %} style="display: none;"> Reto
+                            </label>
+                            <label style="flex: 1; text-align: center; border: 1px solid var(--border-color); padding: 8px; cursor: pointer; border-radius: 8px; {% if settings.border_style == 'ROUNDED' %}background: rgba(20, 184, 166, 0.1); border-color: var(--accent-blue);{% endif %}">
+                                <input type="radio" name="border_style" value="ROUNDED" {% if settings.border_style == 'ROUNDED' %}checked{% endif %} style="display: none;"> Suave
+                            </label>
+                            <label style="flex: 1; text-align: center; border: 1px solid var(--border-color); padding: 8px; cursor: pointer; border-radius: 20px; {% if settings.border_style == 'PILL' %}background: rgba(20, 184, 166, 0.1); border-color: var(--accent-blue);{% endif %}">
+                                <input type="radio" name="border_style" value="PILL" {% if settings.border_style == 'PILL' %}checked{% endif %} style="display: none;"> Pílula
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="settings-row-info">
+                            <h4>Layout Compacto (Densidade)</h4>
+                            <p>Reduz o espaçamento geral para exibir mais conteúdo na tela.</p>
+                        </div>
+                        <div class="settings-row-action">
+                            <label class="toggle-switch">
+                                <input type="checkbox" name="compact_layout" {% if settings.compact_layout %}checked{% endif %}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit" class="btn-primary" style="padding: 10px 20px;">Salvar Alterações</button>
+
+                <div class="settings-card">
+                    <h3>Tema do Workspace</h3>
+                    <p>Defina o tema visual global de toda a empresa.</p>
+                    
+                    <style>
+                        .theme-radio { display: none; }
+                        .theme-circle {
+                            width: 48px;
+                            height: 48px;
+                            border-radius: 50%;
+                            cursor: pointer;
+                            border: 3px solid transparent;
+                            transition: all 0.2s ease;
+                            display: inline-block;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                            overflow: hidden;
+                            background-clip: padding-box;
+                        }
+                        .theme-radio:checked + .theme-circle {
+                            border-color: var(--text-primary);
+                            transform: scale(1.1);
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        }
+                    </style>
+                    <div style="display: flex; gap: 20px; margin-top: 20px; align-items: center;">
+                        <!-- ENTERPRISE -->
+                        <label title="Enterprise Blue">
+                            <input type="radio" name="theme_preference" value="ENTERPRISE" class="theme-radio" {% if settings.theme_preference == 'ENTERPRISE' %}checked{% endif %}>
+                            <div class="theme-circle" style="background-color: #2563EB;"></div>
+                        </label>
+                        
+                        <!-- SLATE -->
+                        <label title="Slate Minimalist">
+                            <input type="radio" name="theme_preference" value="SLATE" class="theme-radio" {% if settings.theme_preference == 'SLATE' %}checked{% endif %}>
+                            <div class="theme-circle" style="background-color: #475569;"></div>
+                        </label>
+                        
+                        <!-- NORDIC -->
+                        <label title="Nordic Forest">
+                            <input type="radio" name="theme_preference" value="NORDIC" class="theme-radio" {% if settings.theme_preference == 'NORDIC' %}checked{% endif %}>
+                            <div class="theme-circle" style="background-color: #82A698;"></div>
+                        </label>
+                    </div>
+                </div>
+
+                    <div class="settings-row" style="justify-content: flex-end;">
+                        <button type="submit" class="btn-primary" style="padding: 10px 20px;">Salvar Branding</button>
+                    </div>
+                </div>
             </form>
         </div>
 
-        <!-- Aba: Usuários -->
-        <div id="tab-usuarios" class="settings-pane" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0;">Equipe ({{ users|length }})</h2>
-                <button class="btn-primary" onclick="document.getElementById('modal-user').showModal()" style="padding: 8px 16px;">+ Convidar Usuário</button>
+        <!-- Painel Templates -->
+        <div id="tab-templates" class="settings-pane" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 25px;">
+                <h2 style="margin: 0;">Templates de Artigos</h2>
+                <button class="btn-primary" style="padding: 8px 16px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Novo Template
+                </button>
             </div>
             
-            <div style="overflow-x: auto;">
+            <div class="settings-card" style="padding: 0; overflow: hidden;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead>
                         <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Nome</th>
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">E-mail</th>
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Status</th>
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Cargo</th>
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); white-space: nowrap;">Nome do Template</th>
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); white-space: nowrap;">Categoria Padrão</th>
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); white-space: nowrap;">Status</th>
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); text-align: right; white-space: nowrap;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <td style="padding: 15px;">Ata de Reunião de Diretoria</td>
+                            <td style="padding: 15px; color: var(--text-secondary);">Governança</td>
+                            <td style="padding: 15px; white-space: nowrap;"><span style="color: #14B8A6; font-size: 0.85rem; font-weight: 500;">Ativo</span></td>
+                            <td style="padding: 15px; text-align: right; white-space: nowrap;">
+                                <button style="background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Editar</button>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <td style="padding: 15px;">Guia de Resolução de Erro 404</td>
+                            <td style="padding: 15px; color: var(--text-secondary);">TI & Suporte</td>
+                            <td style="padding: 15px; white-space: nowrap;"><span style="color: #14B8A6; font-size: 0.85rem; font-weight: 500;">Ativo</span></td>
+                            <td style="padding: 15px; text-align: right; white-space: nowrap;">
+                                <button style="background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Editar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; text-align: center;">Os templates criados aqui aparecerão como opção na tela de criação de novos artigos.</p>
+        </div>
+
+        <!-- Painel Segurança -->
+        <div id="tab-security" class="settings-pane" style="display: none;">
+            <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Segurança e Log</h2>
+            
+            <form method="POST" action="{% url 'settings' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_security">
+                <div class="settings-card">
+                    <h3>Políticas de Acesso</h3>
+                    <p>Controle rigoroso sobre quem e como os colaboradores acessam a plataforma.</p>
+                    
+                    <div class="settings-row">
+                        <div class="settings-row-info">
+                            <h4>Exigir Autenticação 2 Fatores (2FA)</h4>
+                            <p>Força todos os usuários da empresa a utilizarem Google Authenticator.</p>
+                        </div>
+                        <div class="settings-row-action">
+                            <label class="toggle-switch">
+                                <input type="checkbox" name="require_2fa" {% if settings.require_2fa %}checked{% endif %}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div class="settings-row-info">
+                            <h4>Timeout de Sessão Inativa (minutos)</h4>
+                            <p>Desloga usuários automaticamente após inatividade.</p>
+                        </div>
+                        <div class="settings-row-action" style="width: 150px;">
+                            <input type="number" name="session_timeout_minutes" value="{{ settings.session_timeout_minutes|default:120 }}" style="width: 100%; padding: 10px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; text-align: right;">
+                        </div>
+                    </div>
+
+                    <div class="settings-row" style="justify-content: flex-end;">
+                        <button type="submit" class="btn-primary" style="padding: 10px 20px;">Salvar Políticas</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="settings-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3>Log de Auditoria (Recentes)</h3>
+                    <button style="background: transparent; color: var(--accent-blue); border: none; font-size: 0.9rem; font-weight: 500; cursor: pointer;">Baixar CSV Completo</button>
+                </div>
+                <div style="border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                        <tr style="background-color: var(--bg-main); border-bottom: 1px solid var(--border-color);">
+                            <th style="padding: 10px 15px; color: var(--text-secondary); font-weight: 500;">Data/Hora</th>
+                            <th style="padding: 10px 15px; color: var(--text-secondary); font-weight: 500;">Usuário</th>
+                            <th style="padding: 10px 15px; color: var(--text-secondary); font-weight: 500;">Ação</th>
+                            <th style="padding: 10px 15px; color: var(--text-secondary); font-weight: 500;">IP Origem</th>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 12px 15px; color: var(--text-secondary);">10 Jun 2026, 09:30</td>
+                            <td style="padding: 12px 15px;">{{ request.user.username }}</td>
+                            <td style="padding: 12px 15px;">Login bem sucedido</td>
+                            <td style="padding: 12px 15px; font-family: monospace;">192.168.1.100</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 15px; color: var(--text-secondary);">10 Jun 2026, 08:15</td>
+                            <td style="padding: 12px 15px;">admin_rh</td>
+                            <td style="padding: 12px 15px;">Aprovou artigo "Políticas de Férias"</td>
+                            <td style="padding: 12px 15px; font-family: monospace;">10.0.0.45</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Painel Usuários -->
+        <div id="tab-usuarios" class="settings-pane" style="display: none;">
+            <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Usuários & Equipe</h2>
+            
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                <button class="btn-primary" onclick="document.getElementById('modal-user').showModal()" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg> Convidar Usuário
+                </button>
+            </div>
+            
+            <div class="settings-card" style="padding: 0; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Usuário</th>
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Role</th>
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Último Acesso</th>
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for u in users %}
                         <tr style="border-bottom: 1px solid var(--table-border);">
-                            <td style="padding: 12px; font-weight: 500;">
-                                {{ u.username }}
-                                {% if u.recent_articles %}
-                                <button type="button" class="activity-btn" onclick="toggleActivity('activity-{{ u.id }}')" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; margin-left: 5px; font-size: 0.9rem;" title="Ver Atividade">👁️</button>
-                                {% endif %}
+                            <td style="padding: 15px;">
+                                <strong>{{ u.username }}</strong>
+                                <br><span style="font-size: 0.8rem; color: var(--text-secondary);">{{ u.email }}</span>
                             </td>
-                            <td style="padding: 12px; color: var(--text-secondary);">{{ u.email|default:"-" }}</td>
-                            <td style="padding: 12px;">
-                                {% if u.is_online %}
-                                <span style="color: #10B981; font-size: 0.85rem; font-weight: 500;">🟢 Online</span>
-                                {% else %}
-                                <span style="color: #EF4444; font-size: 0.85rem; font-weight: 500;">🔴 Offline</span>
-                                {% endif %}
-                            </td>
-                            <td style="padding: 12px;">
-                                <span style="background-color: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">{{ u.get_role_display }}</span>
-                            </td>
-                            <td style="padding: 12px; text-align: right;">
-                                {% if u != request.user %}
-                                    {% if request.user.role == 'ADMIN' or request.user.role == 'SUPERADMIN' %}
-                                    <form method="POST" style="display: inline-block; margin: 0;">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="update_role">
-                                        <input type="hidden" name="user_id" value="{{ u.id }}">
-                                        <select name="role" onchange="this.form.submit()" style="padding: 6px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; font-size: 0.85rem;">
-                                            <option value="COMMON" {% if u.role == 'COMMON' %}selected{% endif %}>Usuário Comum</option>
-                                            <option value="EMPLOYEE" {% if u.role == 'EMPLOYEE' %}selected{% endif %}>Funcionário</option>
-                                            <option value="ADMIN" {% if u.role == 'ADMIN' %}selected{% endif %}>Admin</option>
-                                        </select>
-                                    </form>
-                                    {% endif %}
-                                {% else %}
-                                <span style="color: var(--text-secondary); font-size: 0.85rem;">Você</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <!-- Accordion de Atividade -->
-                        <tr id="activity-{{ u.id }}" class="activity-row" style="display: none; border-bottom: 1px solid var(--table-border);">
-                            <td colspan="5" style="padding: 15px; font-size: 0.85rem; color: var(--text-secondary);">
-                                <strong style="color: var(--text-primary);">Últimas Edições:</strong>
-                                <ul style="margin: 8px 0 0 20px; padding: 0;">
-                                    {% for art in u.recent_articles %}
-                                    <li><a href="{{ art.get_absolute_url }}" style="color: var(--accent-blue); text-decoration: none;">{{ art.title }}</a> <span style="color: #64748B;">({{ art.updated_at|date:"d/m/Y H:i" }})</span></li>
-                                    {% empty %}
-                                    <li>Nenhuma atividade recente.</li>
-                                    {% endfor %}
-                                </ul>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Aba: Categorias -->
-        <div id="tab-categorias" class="settings-pane" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0;">Categorias do Workspace</h2>
-            </div>
-            
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead>
-                        <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Nome da Categoria</th>
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for c in categories %}
-                        <tr style="border-bottom: 1px solid var(--table-border);">
-                            <td style="padding: 12px; font-weight: 500;">
-                                {{ c.name }}
-                                {% if c.is_special %}<span title="Categoria Especial" style="margin-left:5px; font-size:0.9rem;">🔒</span>{% endif %}
-                            </td>
-                            <td style="padding: 12px; text-align: right;">
-                                <form method="POST" style="margin: 0;" onsubmit="return confirm('Tem certeza que deseja excluir esta categoria? Isso pode afetar os artigos vinculados.');">
+                            <td style="padding: 15px;">
+                                <form method="POST" action="{% url 'settings' %}" style="display: flex; gap: 5px;">
                                     {% csrf_token %}
-                                    <input type="hidden" name="action" value="delete_category">
-                                    <input type="hidden" name="category_id" value="{{ c.id }}">
-                                    <button type="submit" style="background: transparent; border: none; color: #ef4444; cursor: pointer; text-decoration: underline;">Excluir</button>
+                                    <input type="hidden" name="action" value="update_role">
+                                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                                    <select name="role" style="padding: 5px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+                                        <option value="COMMON" {% if u.role == 'COMMON' %}selected{% endif %}>Leitor</option>
+                                        <option value="EMPLOYEE" {% if u.role == 'EMPLOYEE' %}selected{% endif %}>Autor</option>
+                                        <option value="ADMIN" {% if u.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                                    </select>
+                                    <button type="submit" style="background: transparent; color: var(--accent-blue); border: 1px solid var(--accent-blue); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Salvar</button>
                                 </form>
                             </td>
+                            <td style="padding: 15px; color: var(--text-secondary); font-size: 0.9rem;">
+                                {% if u.last_seen %}
+                                    {{ u.last_seen|date:"d/m/Y H:i" }}
+                                    {% if u.is_online %}<span style="color: #14B8A6; font-size: 0.8rem; margin-left: 5px;">(Online)</span>{% endif %}
+                                {% else %}
+                                    Nunca logou
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px; text-align: right;">
+                                <button onclick="toggleActivity('activity-{{ u.id }}')" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Histórico</button>
+                            </td>
                         </tr>
-                        {% empty %}
-                        <tr><td colspan="2" style="padding: 12px; color: var(--text-secondary);">Nenhuma categoria encontrada.</td></tr>
+                        <tr id="activity-{{ u.id }}" style="display: none; background-color: rgba(0,0,0,0.02);">
+                            <td colspan="4" style="padding: 15px; font-size: 0.85rem; color: var(--text-secondary);">
+                                <strong>Artigos Recentes:</strong><br>
+                                {% for a in u.recent_articles %}
+                                    - <a href="{{ a.get_absolute_url }}" style="color: var(--accent-blue);">{{ a.title }}</a> ({{ a.updated_at|date:"d/m/Y" }})<br>
+                                {% empty %}
+                                    Nenhum artigo publicado.
+                                {% endfor %}
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
         
+        <!-- Painel Categorias -->
+        <div id="tab-categorias" class="settings-pane" style="display: none;">
+            <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Categorias</h2>
+            <div class="settings-card" style="padding: 0; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Nome</th>
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary);">Status</th>
+                            <th style="padding: 15px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr style="border-bottom: 1px solid var(--table-border);">
+                            <td style="padding: 15px;">{{ cat.name }}</td>
+                            <td style="padding: 15px;">
+                                {% if cat.is_special %}
+                                <span style="background-color: rgba(234, 179, 8, 0.2); color: #eab308; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Especial / Global</span>
+                                {% else %}
+                                <span style="color: var(--text-secondary); font-size: 0.9rem;">Customizada</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px; text-align: right;">
+                                {% if not cat.is_special or request.user.role == 'ADMIN' or request.user.role == 'SUPERADMIN' %}
+                                <form method="POST" action="{% url 'settings' %}" onsubmit="return confirm('Tem certeza? Isso pode afetar os artigos relacionados.');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_category">
+                                    <input type="hidden" name="category_id" value="{{ cat.id }}">
+                                    <button type="submit" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Remover</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Painel Tutoriais -->
+        <div id="tab-tutoriais" class="settings-pane" style="display: none;">
+            <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Ajuda & Tutoriais</h2>
+            
+            <div style="background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 30px; text-align: center; max-width: 500px; margin: 0 auto;">
+                <div style="margin-bottom: 20px; display: flex; justify-content: center;">
+                    <svg width="48" height="48" fill="none" stroke="var(--accent-blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                </div>
+                <h3 style="margin-bottom: 10px; color: var(--text-primary); font-size: 1.3rem;">Revisar Tutorial do Sistema</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 0.95rem; line-height: 1.5;">Aprenda a utilizar as principais ferramentas e atalhos da Base de Conhecimento em menos de um minuto.</p>
+                <button onclick="restartTour()" class="btn-primary" style="padding: 12px 24px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Iniciar Tour Interativo
+                </button>
+            </div>
+        
+        </div>
     </div>
 </div>
 
@@ -187,13 +621,9 @@
 </dialog>
 
 <script>
-function toggleActivity(id) {
-    const el = document.getElementById(id);
-    if(el.style.display === 'none') {
-        el.style.display = 'table-row';
-    } else {
-        el.style.display = 'none';
-    }
+function restartTour() {
+    localStorage.removeItem('microwiki_tour_completed');
+    window.location.href = '/?tour=1';
 }
 
 function showSettingsTab(tabId) {
@@ -201,20 +631,16 @@ function showSettingsTab(tabId) {
     document.querySelectorAll('.settings-pane').forEach(el => el.style.display = 'none');
     // Remove active styles from buttons
     document.querySelectorAll('.settings-tab').forEach(el => {
-        el.style.background = 'transparent';
-        el.style.color = 'var(--text-secondary)';
-        el.style.border = '1px solid transparent';
+        el.classList.remove('active');
     });
     
     // Show selected pane
     document.getElementById('tab-' + tabId).style.display = 'block';
     
-    // Set active style to clicked button (find it by looking for the onclick string)
+    // Set active style to clicked button
     const btn = Array.from(document.querySelectorAll('.settings-tab')).find(el => el.getAttribute('onclick').includes(tabId));
     if(btn) {
-        btn.style.background = 'rgba(20, 184, 166, 0.1)';
-        btn.style.color = 'var(--accent-blue)';
-        btn.style.border = '1px solid var(--accent-blue)';
+        btn.classList.add('active');
     }
 }
 
@@ -247,5 +673,97 @@ function inviteUser() {
         }
     });
 }
+
+// Live Preview Logic para Aparência & Branding
+document.addEventListener('DOMContentLoaded', function() {
+    // Font Family Live Preview
+    const fontSelect = document.querySelector('select[name="font_family"]');
+    if (fontSelect) {
+        fontSelect.addEventListener('change', function(e) {
+            const fonts = {
+                'MODERN': "'Inter', sans-serif",
+                'CLASSIC': "'Merriweather', serif",
+                'TECHNICAL': "'Fira Code', monospace"
+            };
+            document.documentElement.style.setProperty('--font-family', fonts[e.target.value]);
+        });
+    }
+
+    // Border Style Live Preview
+    const borderRadios = document.querySelectorAll('input[name="border_style"]');
+    borderRadios.forEach(el => {
+        el.addEventListener('change', function(e) {
+            const borders = {
+                'SHARP': "0px",
+                'ROUNDED': "8px",
+                'PILL': "9999px"
+            };
+            document.documentElement.style.setProperty('--border-radius-base', borders[e.target.value]);
+            
+            // Atualizar estilo visual dos radio buttons
+            borderRadios.forEach(r => {
+                r.parentElement.style.background = 'transparent';
+                r.parentElement.style.borderColor = 'var(--border-color)';
+            });
+            e.target.parentElement.style.background = 'rgba(20, 184, 166, 0.1)';
+            e.target.parentElement.style.borderColor = 'var(--accent-blue)';
+        });
+    });
+
+    // Theme Live Preview
+    const THEMES = {
+        'light': {
+            'ENTERPRISE': '--bg-main: #F1F5F9; --bg-surface: #FFFFFF; --bg-header: rgba(255, 255, 255, 0.8); --bg-sidebar: rgba(255, 255, 255, 0.8); --text-primary: #0F172A; --accent-blue: #2563EB; --border-color: #E2E8F0; --input-bg: #F8FAFC; --table-header-bg: #F8FAFC; --table-border: #E2E8F0; --text-secondary: #64748B;',
+            'SLATE': '--bg-main: #F8FAFC; --bg-surface: #FFFFFF; --bg-header: rgba(255, 255, 255, 0.8); --bg-sidebar: rgba(255, 255, 255, 0.8); --text-primary: #334155; --accent-blue: #475569; --border-color: #E2E8F0; --input-bg: #F1F5F9; --table-header-bg: #F8FAFC; --table-border: #E2E8F0; --text-secondary: #64748B;',
+            'NORDIC': '--bg-main: #F4F1EA; --bg-surface: #FFFFFF; --bg-header: rgba(255, 255, 255, 0.8); --bg-sidebar: rgba(255, 255, 255, 0.8); --text-primary: #2C3E38; --accent-blue: #5C7A6D; --border-color: #E2DDD3; --input-bg: #FCFBF9; --table-header-bg: #F4F1EA; --table-border: #E2DDD3; --text-secondary: #7A8B84;'
+        },
+        'dark': {
+            'ENTERPRISE': '--bg-main: #0F172A; --bg-surface: #1E293B; --bg-header: rgba(30, 41, 59, 0.7); --bg-sidebar: rgba(30, 41, 59, 0.7); --text-primary: #F8FAFC; --accent-blue: #2563EB; --border-color: rgba(255, 255, 255, 0.05); --input-bg: #1E293B; --table-header-bg: rgba(255, 255, 255, 0.05); --table-border: rgba(255, 255, 255, 0.05); --text-secondary: #94A3B8;',
+            'SLATE': '--bg-main: #121212; --bg-surface: #1E1E1E; --bg-header: rgba(18, 18, 18, 0.7); --bg-sidebar: rgba(18, 18, 18, 0.7); --text-primary: #CBD5E1; --accent-blue: #475569; --border-color: rgba(255, 255, 255, 0.05); --input-bg: #1E1E1E; --table-header-bg: rgba(255, 255, 255, 0.05); --table-border: rgba(255, 255, 255, 0.05); --text-secondary: #94A3B8;',
+            'NORDIC': '--bg-main: #1A2421; --bg-surface: #23302C; --bg-header: rgba(26, 36, 33, 0.8); --bg-sidebar: rgba(26, 36, 33, 0.8); --text-primary: #FAF8F5; --accent-blue: #82A698; --border-color: rgba(255, 255, 255, 0.08); --input-bg: #23302C; --table-header-bg: rgba(255, 255, 255, 0.05); --table-border: rgba(255, 255, 255, 0.08); --text-secondary: #BCC5C1;'
+        }
+    };
+
+    function updatePreviewTheme() {
+        const selectedTheme = document.querySelector('input[name="theme_preference"]:checked').value;
+        const mode = '{% if request.user.dark_mode %}dark{% else %}light{% endif %}';
+        const themeVars = THEMES[mode][selectedTheme];
+        
+        if(themeVars) {
+            themeVars.split(';').forEach(pair => {
+                if(!pair.trim()) return;
+                const [key, value] = pair.split(':');
+                if(key && value) {
+                    document.documentElement.style.setProperty(key.trim(), value.trim());
+                }
+            });
+        }
+    }
+
+    document.querySelectorAll('.theme-radio').forEach(radio => {
+        radio.addEventListener('change', updatePreviewTheme);
+    });
+
+    // Compact Layout Live Preview
+    const compactToggle = document.querySelector('input[name="compact_layout"]');
+    if (compactToggle) {
+        compactToggle.addEventListener('change', function(e) {
+            document.documentElement.style.setProperty('--global-padding', e.target.checked ? '12px' : '24px');
+        });
+    }
+
+    // Favicon Live Preview
+    const faviconInput = document.querySelector('input[name="favicon"]');
+    if (faviconInput) {
+        faviconInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const url = URL.createObjectURL(file);
+                const imgContainer = this.previousElementSibling;
+                imgContainer.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: contain;">`;
+            }
+        });
+    }
+});
 </script>
 {% endblock %}

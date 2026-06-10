@@ -129,6 +129,8 @@ class ArticleDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['related_articles'] = Article.objects.filter(category=self.object.category, status='APPROVED').exclude(id=self.object.id)[:5]
+        from .models import FavoriteArticle
+        context['is_favorited'] = FavoriteArticle.objects.filter(user=self.request.user, article=self.object).exists() if self.request.user.is_authenticated else False
         return context
 
 class CategoryDetailView(LoginRequiredMixin, ListView):
@@ -197,46 +199,33 @@ class ArticleFrontendCreateView(LoginRequiredMixin, View):
         return render(request, 'article_editor.html', {'categories': categories})
 
     def post(self, request):
+        from .services import create_article
+        from django.core.exceptions import ValidationError
+        
         title = request.POST.get('title')
         content = request.POST.get('content')
         category_id = request.POST.get('category')
         tags_raw = request.POST.get('tags', '')
         visibility = request.POST.get('visibility', 'PUBLIC')
         action = request.POST.get('action') # 'draft' ou 'pending'
+        cover_image = request.FILES.get('cover_image')
+        attachment = request.FILES.get('attachment')
 
-        if not title or not content or not category_id:
-            return JsonResponse({'success': False, 'error': 'Campos obrigatórios faltando.'}, status=400)
-
-        slug = slugify(title)
-        category = get_object_or_404(Category, id=category_id)
-        
-        status = 'DRAFT'
-        if action == 'pending':
-            status = 'PENDING'
-        if request.user.role in ['ADMIN', 'SUPERADMIN'] and action == 'publish':
-            status = 'APPROVED'
-
-        article = Article.objects.create(
-            title=title,
-            slug=slug,
-            content=content,
-            category=category,
-            author=request.user,
-            status=status,
-            visibility=visibility
-        )
-
-        if tags_raw:
-            tag_names = [t.strip() for t in tags_raw.split(',') if t.strip()]
-            for t_name in tag_names:
-                t_slug = slugify(t_name)
-                tag_obj, _ = Tag.objects.get_or_create(slug=t_slug, defaults={'name': t_name})
-                article.tags.add(tag_obj)
-        
-        if status == 'PENDING':
-            ApprovalNotification.objects.create(article=article)
-
-        return JsonResponse({'success': True, 'url': article.get_absolute_url()})
+        try:
+            article = create_article(
+                user=request.user,
+                title=title,
+                content=content,
+                category_id=category_id,
+                tags_raw=tags_raw,
+                visibility=visibility,
+                action=action,
+                cover_image=cover_image,
+                attachment=attachment
+            )
+            return JsonResponse({'success': True, 'url': article.get_absolute_url()})
+        except ValidationError as e:
+            return JsonResponse({'success': False, 'error': str(e.message) if hasattr(e, 'message') else str(e)}, status=400)
 
 @method_decorator(role_required('ADMIN', 'SUPERADMIN'), name='dispatch')
 class ArticleReviewView(LoginRequiredMixin, View):
@@ -254,6 +243,13 @@ class ArticleReviewView(LoginRequiredMixin, View):
             ApprovalNotification.objects.filter(article=article).update(is_read=True)
             
         return redirect('article_detail', slug=slug)
+
+class ToggleDarkModeAPIView(LoginRequiredMixin, View):
+    def post(self, request):
+        user = request.user
+        user.dark_mode = not user.dark_mode
+        user.save()
+        return JsonResponse({'success': True, 'dark_mode': user.dark_mode})
 
 class NotificationsAPIView(LoginRequiredMixin, View):
     def get(self, request):
@@ -287,28 +283,17 @@ class NotificationsAPIView(LoginRequiredMixin, View):
 @method_decorator(role_required('ADMIN', 'SUPERADMIN'), name='dispatch')
 class CategoryCreateAPIView(LoginRequiredMixin, View):
     def post(self, request):
+        from .services import create_category
+        from django.core.exceptions import ValidationError
+        
         name = request.POST.get('name')
         is_special_raw = request.POST.get('is_special')
-        is_special = is_special_raw == 'on' or is_special_raw == 'true' or is_special_raw == '1'
         
-        if not name:
-            return JsonResponse({'success': False, 'error': 'Nome não informado.'}, status=400)
-            
-        slug = slugify(name)
-        company = request.user.company
-        
-        # Verify if exists
-        if Category.objects.filter(slug=slug, company=company).exists():
-            return JsonResponse({'success': False, 'error': 'Categoria já existe.'}, status=400)
-            
-        category = Category.objects.create(
-            name=name,
-            slug=slug,
-            company=company,
-            is_special=is_special
-        )
-        
-        return JsonResponse({'success': True, 'id': category.id, 'name': category.name})
+        try:
+            category = create_category(user=request.user, name=name, is_special_raw=is_special_raw)
+            return JsonResponse({'success': True, 'id': category.id, 'name': category.name})
+        except ValidationError as e:
+            return JsonResponse({'success': False, 'error': str(e.message) if hasattr(e, 'message') else str(e)}, status=400)
 
 class UserProfileView(LoginRequiredMixin, View):
     def get(self, request):
@@ -318,7 +303,9 @@ class UserProfileView(LoginRequiredMixin, View):
 @method_decorator(role_required('ADMIN', 'SUPERADMIN'), name='dispatch')
 class SettingsView(LoginRequiredMixin, View):
     def get(self, request):
+        from .models import WorkspaceSettings
         company = request.user.company
+        settings_obj = None
         if company:
             # Exclude SUPERADMIN
             users_qs = company.users.exclude(role='SUPERADMIN')
@@ -327,23 +314,52 @@ class SettingsView(LoginRequiredMixin, View):
                 u.recent_articles = Article.objects.filter(author=u).order_by('-updated_at')[:3]
                 
             categories = Category.objects.filter(company=company)
+            settings_obj, _ = WorkspaceSettings.objects.get_or_create(company=company)
         else:
             users = []
             categories = []
-        return render(request, 'settings.html', {'company': company, 'users': users, 'categories': categories})
+        return render(request, 'settings.html', {'company': company, 'users': users, 'categories': categories, 'settings': settings_obj})
         
     def post(self, request):
-        # Update Company Name
+        from .models import WorkspaceSettings, CustomUser
         action = request.POST.get('action')
         company = request.user.company
         
-        if action == 'update_company' and company:
+        if not company:
+            return redirect('settings')
+            
+        if action == 'update_company':
             company.name = request.POST.get('name', company.name)
             company.domain = request.POST.get('domain', company.domain)
             company.save()
-            return redirect('settings')
             
-        elif action == 'delete_category' and company:
+        elif action == 'update_branding':
+            settings_obj, _ = WorkspaceSettings.objects.get_or_create(company=company)
+            settings_obj.primary_color = request.POST.get('primary_color', settings_obj.primary_color)
+            if 'favicon' in request.FILES:
+                settings_obj.favicon = request.FILES['favicon']
+            
+            if request.POST.get('font_family'):
+                settings_obj.font_family = request.POST.get('font_family')
+                
+            if request.POST.get('border_style'):
+                settings_obj.border_style = request.POST.get('border_style')
+                
+            if request.POST.get('theme_preference'):
+                settings_obj.theme_preference = request.POST.get('theme_preference')
+                
+            settings_obj.compact_layout = request.POST.get('compact_layout') == 'on'
+            settings_obj.force_dark_mode = request.POST.get('force_dark_mode') == 'on'
+            
+            settings_obj.save()
+            
+        elif action == 'update_security':
+            settings_obj, _ = WorkspaceSettings.objects.get_or_create(company=company)
+            settings_obj.require_2fa = request.POST.get('require_2fa') == 'on'
+            settings_obj.session_timeout_minutes = int(request.POST.get('session_timeout_minutes', settings_obj.session_timeout_minutes))
+            settings_obj.save()
+            
+        elif action == 'delete_category':
             cat_id = request.POST.get('category_id')
             cat = Category.objects.filter(id=cat_id, company=company).first()
             if cat:
@@ -351,18 +367,15 @@ class SettingsView(LoginRequiredMixin, View):
                     from django.http import HttpResponseForbidden
                     return HttpResponseForbidden('Acesso negado: Somente administradores podem excluir categorias especiais.')
                 cat.delete()
-            return redirect('settings')
             
-        elif action == 'update_role' and company:
+        elif action == 'update_role':
             user_id = request.POST.get('user_id')
             new_role = request.POST.get('role')
-            from .models import CustomUser
             u = CustomUser.objects.filter(id=user_id, company=company).first()
             if u and u != request.user:
                 u.role = new_role
                 u.save()
-            return redirect('settings')
-            
+                
         return redirect('settings')
 
 @method_decorator(role_required('ADMIN', 'SUPERADMIN'), name='dispatch')
@@ -400,6 +413,9 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
         return render(request, 'article_editor.html', {'categories': categories, 'article': article})
 
     def post(self, request, slug):
+        from .services import update_article
+        from django.core.exceptions import ValidationError
+        
         article = get_object_or_404(Article, slug=slug)
         if article.author != request.user and request.user.role not in ['ADMIN', 'SUPERADMIN']:
             return JsonResponse({'success': False, 'error': 'Permissão negada.'}, status=403)
@@ -410,40 +426,28 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
         tags_raw = request.POST.get('tags', '')
         visibility = request.POST.get('visibility', 'PUBLIC')
         action = request.POST.get('action')
+        cover_image = request.FILES.get('cover_image')
+        attachment = request.FILES.get('attachment')
         
-        if not title or not content or not category_id:
-            return JsonResponse({'success': False, 'error': 'Campos obrigatórios faltando.'}, status=400)
-            
-        article.title = title
-        article.slug = slugify(title)
-        article.content = content
-        article.category_id = category_id
-        article.visibility = visibility
-        
-        status = 'DRAFT'
-        if action == 'pending':
-            status = 'PENDING'
-        if request.user.role in ['ADMIN', 'SUPERADMIN'] and action == 'publish':
-            status = 'APPROVED'
-            
-        article.status = status
-        article.save()
-        
-        # update tags
-        article.tags.clear()
-        if tags_raw:
-            tag_names = [t.strip() for t in tags_raw.split(',') if t.strip()]
-            for t_name in tag_names:
-                t_slug = slugify(t_name)
-                tag_obj, _ = Tag.objects.get_or_create(slug=t_slug, defaults={'name': t_name})
-                article.tags.add(tag_obj)
-                
-        if status == 'PENDING':
-            ApprovalNotification.objects.create(article=article)
-            
-        return JsonResponse({'success': True, 'url': article.get_absolute_url()})
+        try:
+            article = update_article(
+                article=article,
+                user=request.user,
+                title=title,
+                content=content,
+                category_id=category_id,
+                tags_raw=tags_raw,
+                visibility=visibility,
+                action=action,
+                cover_image=cover_image,
+                attachment=attachment
+            )
+            return JsonResponse({'success': True, 'url': article.get_absolute_url()})
+        except ValidationError as e:
+            return JsonResponse({'success': False, 'error': str(e.message) if hasattr(e, 'message') else str(e)}, status=400)
 
 from .decorators import global_superadmin_required
+
 @method_decorator(global_superadmin_required(), name='dispatch')
 class MasterAdminView(LoginRequiredMixin, View):
     def get(self, request):
@@ -499,3 +503,13 @@ class MasterAdminView(LoginRequiredMixin, View):
                     if comp and not Category.objects.filter(slug=slug, company=comp).exists():
                         Category.objects.create(name=name, slug=slug, company=comp, is_special=True)
         return redirect('master_admin')
+
+class FavoriteToggleAPIView(LoginRequiredMixin, View):
+    def post(self, request, slug):
+        from .models import FavoriteArticle
+        article = get_object_or_404(Article, slug=slug)
+        fav, created = FavoriteArticle.objects.get_or_create(user=request.user, article=article)
+        if not created:
+            fav.delete()
+            return JsonResponse({"favorited": False})
+        return JsonResponse({"favorited": True})

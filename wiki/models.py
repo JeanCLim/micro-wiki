@@ -12,6 +12,36 @@ class Company(models.Model):
     def __str__(self):
         return self.name
 
+class WorkspaceSettings(models.Model):
+    company = models.OneToOneField(Company, on_delete=models.CASCADE, related_name='settings')
+    primary_color = models.CharField(max_length=7, default='#14B8A6')
+    favicon = models.ImageField(upload_to='favicons/', blank=True, null=True)
+    font_family = models.CharField(max_length=20, choices=[
+        ('MODERN', 'Inter, sans-serif'),
+        ('CLASSIC', 'Merriweather, serif'),
+        ('TECHNICAL', 'Fira Code, monospace')
+    ], default='MODERN')
+    border_style = models.CharField(max_length=15, choices=[
+        ('SHARP', '0px'),
+        ('ROUNDED', '8px'),
+        ('PILL', '9999px')
+    ], default='ROUNDED')
+    compact_layout = models.BooleanField(default=False)
+    
+    THEME_CHOICES = (
+        ('ENTERPRISE', 'Enterprise Blue'),
+        ('SLATE', 'Slate Minimalist'),
+        ('NORDIC', 'Nordic Forest'),
+    )
+    theme_preference = models.CharField(max_length=20, choices=THEME_CHOICES, default='ENTERPRISE')
+    
+    require_2fa = models.BooleanField(default=False)
+    session_timeout_minutes = models.IntegerField(default=120)
+    slack_webhook_url = models.URLField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"Configurações - {self.company.name}"
+
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('COMMON', 'Usuário Comum'),
@@ -21,7 +51,9 @@ class CustomUser(AbstractUser):
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='COMMON')
     employee_code = models.CharField(max_length=20, blank=True, null=True, unique=True)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True, related_name='users')
+    company = models.ForeignKey('Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
+    dark_mode = models.BooleanField(default=False)
+    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
     last_seen = models.DateTimeField(null=True, blank=True)
 
     @property
@@ -36,8 +68,8 @@ class CustomUser(AbstractUser):
         return f"{self.username} ({self.get_role_display()})"
 
 class Category(models.Model):
-    name = models.CharField(max_length=100)
-    slug = models.SlugField()
+    name = models.CharField(max_length=100, db_index=True)
+    slug = models.SlugField(db_index=True)
     description = models.TextField(blank=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True, related_name='categories')
     is_special = models.BooleanField(default=False)
@@ -67,8 +99,10 @@ class Article(models.Model):
         ('INTERNAL_ONLY', 'Apenas Interno'),
         ('MANAGERS_ONLY', 'Apenas Gestores'),
     )
-    title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    title = models.CharField(max_length=200, db_index=True)
+    slug = models.SlugField(unique=True, db_index=True)
+    cover_image = models.ImageField(upload_to='articles/covers/', null=True, blank=True)
+    attachment = models.FileField(upload_to='articles/attachments/', null=True, blank=True)
     content = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='articles')
     tags = models.ManyToManyField(Tag, blank=True, related_name='articles')
@@ -108,3 +142,15 @@ class SystemUpdate(models.Model):
 
     def __str__(self):
         return f"Update {self.version} - {self.title}"
+
+class FavoriteArticle(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='favorites')
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'article')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} favoritou {self.article.title}"
