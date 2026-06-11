@@ -16,7 +16,7 @@ def validate_and_process_files(article, request_user, cover_image=None, attachme
         validate_file_size_and_role(attachment, request_user.role)
         article.attachment = attachment
 
-def create_article(user, title, content, category_id, tags_raw, visibility, action, cover_image=None, attachment=None):
+def create_article(user, title, content, category_id, tags_raw, visibility, action, cover_image=None, attachment=None, version="01", valid_until=None, changes_summary="Criação", responsible_area=""):
     if not title or not content or not category_id:
         raise ValidationError('Campos obrigatórios faltando.')
 
@@ -39,7 +39,11 @@ def create_article(user, title, content, category_id, tags_raw, visibility, acti
         category=category,
         author=user,
         status=status,
-        visibility=visibility
+        visibility=visibility,
+        version=version,
+        valid_until=valid_until if valid_until else None,
+        changes_summary=changes_summary,
+        responsible_area=responsible_area
     )
     
     validate_and_process_files(article, user, cover_image, attachment)
@@ -58,7 +62,7 @@ def create_article(user, title, content, category_id, tags_raw, visibility, acti
 
     return article
 
-def update_article(article, user, title, content, category_id, tags_raw, visibility, action, cover_image=None, attachment=None):
+def update_article(article, user, title, content, category_id, tags_raw, visibility, action, cover_image=None, attachment=None, version="01", valid_until=None, changes_summary="Criação", responsible_area=""):
     if not title or not content or not category_id:
         raise ValidationError('Campos obrigatórios faltando.')
 
@@ -72,6 +76,10 @@ def update_article(article, user, title, content, category_id, tags_raw, visibil
     article.content = content
     article.category = category
     article.visibility = visibility
+    article.version = version
+    article.valid_until = valid_until if valid_until else None
+    article.changes_summary = changes_summary
+    article.responsible_area = responsible_area
 
     status = 'DRAFT'
     if action == 'pending':

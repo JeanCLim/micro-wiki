@@ -3,13 +3,27 @@
 
 {% block content %}
 <div class="editor-container" style="background-color: var(--bg-surface); padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid var(--border-color); margin: 40px auto; max-width: 900px;">
-    <div class="header" style="margin-bottom: 2rem;">
-        <h1>{% if article %}Editar Artigo{% else %}Criar Novo Artigo{% endif %}</h1>
+    <div class="header" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="margin: 0;">{% if article %}Editar Artigo{% else %}Criar Novo Artigo{% endif %}</h1>
+        
+        {% if not article and templates %}
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <label style="font-size: 0.9rem; color: var(--text-secondary);">Carregar Template:</label>
+            <select id="template-switcher" onchange="loadTemplate(this.value)" class="soft-input" style="margin: 0; padding: 6px 12px; height: auto;">
+                <option value="">-- Selecione --</option>
+                {% for t in templates %}
+                    <option value="{{ t.id }}" {% if initial_template and initial_template.id == t.id %}selected{% endif %}>{{ t.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        <button type="button" id="start-editor-tour" class="btn-outline" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; justify-content: center; font-size: 1.2rem; font-weight: bold; border-color: var(--accent-blue); color: var(--accent-blue);" title="Como preencher?">?</button>
     </div>
 
     <div class="form-group" style="margin-bottom: 2rem;">
         <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">Título do Artigo</label>
-        <input type="text" id="article-title" class="soft-input" style="height: 48px;" placeholder="Escreva o título aqui..." value="{{ article.title|default:'' }}" autocomplete="off">
+        <input type="text" id="article-title" class="soft-input" style="height: 48px;" placeholder="Escreva o título aqui..." value="{% if article %}{{ article.title|default:'' }}{% elif initial_template %}{{ initial_template.title }}{% endif %}" autocomplete="off">
     </div>
 
     <div class="form-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: end; margin-bottom: 24px;">
@@ -17,9 +31,9 @@
             <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">Categoria</label>
             <div style="display: flex; gap: 8px; align-items: center;">
                 <select id="article-category" class="soft-input" style="flex: 1; margin: 0; appearance: auto;">
-                    <option value="" disabled {% if not article %}selected{% endif %}>Selecione uma categoria</option>
+                    <option value="" disabled {% if not article and not initial_template %}selected{% endif %}>Selecione uma categoria</option>
                     {% for cat in categories %}
-                    <option value="{{ cat.id }}" {% if article.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    <option value="{{ cat.id }}" {% if article and article.category.id == cat.id %}selected{% elif initial_template and initial_template.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                     {% endfor %}
                 </select>
                 <button type="button" onclick="document.getElementById('category-modal').showModal()" style="background-color: var(--accent-blue); border: none; color: #000; border-radius: 6px; width: 48px; height: 48px; flex-shrink: 0; cursor: pointer; font-size: 1.5rem; font-weight: bold; display: flex; justify-content: center; align-items: center; transition: background-color 0.2s;">+</button>
@@ -27,7 +41,7 @@
         </div>
         <div class="form-group" style="margin: 0;">
             <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">Tags</label>
-            <input type="text" id="article-tags" class="soft-input" style="margin: 0;" placeholder="ex: rede, internet, roteador" value="{% if article %}{{ article.tags.all|join:', ' }}{% endif %}" autocomplete="off">
+            <input type="text" id="article-tags" class="soft-input" style="margin: 0;" placeholder="ex: rede, internet, roteador" value="{% if article %}{{ article.tags.all|join:', ' }}{% elif initial_template %}{{ initial_template.default_tags }}{% endif %}" autocomplete="off">
         </div>
         <div class="form-group" style="margin: 0;">
             <label style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">
@@ -35,16 +49,44 @@
                 Visibilidade
             </label>
             <select id="article-visibility" class="soft-input" style="margin: 0; appearance: auto;">
-                <option value="PUBLIC" {% if article and article.visibility == 'PUBLIC' %}selected{% endif %}>Público</option>
-                <option value="INTERNAL_ONLY" {% if article and article.visibility == 'INTERNAL_ONLY' %}selected{% endif %}>Apenas Interno</option>
-                <option value="MANAGERS_ONLY" {% if article and article.visibility == 'MANAGERS_ONLY' %}selected{% endif %}>Apenas Gestores</option>
+                <option value="PUBLIC" {% if article and article.visibility == 'PUBLIC' %}selected{% elif initial_template and initial_template.default_visibility == 'PUBLIC' %}selected{% endif %}>Público</option>
+                <option value="INTERNAL_ONLY" {% if article and article.visibility == 'INTERNAL_ONLY' %}selected{% elif initial_template and initial_template.default_visibility == 'INTERNAL_ONLY' %}selected{% endif %}>Apenas Interno</option>
+                <option value="MANAGERS_ONLY" {% if article and article.visibility == 'MANAGERS_ONLY' %}selected{% elif initial_template and initial_template.default_visibility == 'MANAGERS_ONLY' %}selected{% endif %}>Apenas Gestores</option>
             </select>
         </div>
     </div>
 
+    {% if request.user.role == 'ADMIN' or request.user.role == 'SUPERADMIN' %}
+    <div class="form-group" style="margin-bottom: 2rem;">
+        <label style="display: block; margin-bottom: 12px; font-weight: 500; font-size: 0.95rem;">Identificação (Metadados)</label>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; background-color: rgba(0,0,0,0.02); padding: 16px; border: 1px solid var(--border-color); border-radius: 8px;">
+            {% if article %}
+            <div>
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Versão</label>
+                <input type="text" id="article-version" class="soft-input" value="{{ article.version|default:'01' }}" placeholder="Ex: 01">
+            </div>
+            {% endif %}
+            <div>
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Vigente até (Opcional)</label>
+                <input type="date" id="article-valid-until" class="soft-input" value="{% if article and article.valid_until %}{{ article.valid_until|date:'Y-m-d' }}{% endif %}">
+            </div>
+            {% if article %}
+            <div>
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Alterações</label>
+                <input type="text" id="article-changes-summary" class="soft-input" value="{{ article.changes_summary }}" placeholder="Resumo das mudanças">
+            </div>
+            {% endif %}
+            <div>
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Área Responsável</label>
+                <input type="text" id="article-responsible-area" class="soft-input" value="{% if article %}{{ article.responsible_area }}{% endif %}" placeholder="Ex: RH, TI, Geral">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="form-group" style="margin-bottom: 2rem;">
         <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;">Conteúdo</label>
-        <div id="quill-editor" style="height: 400px; background-color: var(--input-bg); border: none; border-radius: 6px; color: var(--text-primary); font-family: inherit;">{{ article.content|safe }}</div>
+        <div id="quill-editor" style="height: 400px; background-color: var(--input-bg); border: none; border-radius: 6px; color: var(--text-primary); font-family: inherit;">{% if article %}{{ article.content|safe }}{% elif initial_template %}{{ initial_template.content_html|safe }}{% endif %}</div>
     </div>
 
     <div class="form-group">
@@ -290,6 +332,11 @@
             return;
         }
 
+        const version = document.getElementById('article-version') ? document.getElementById('article-version').value : '01';
+        const validUntil = document.getElementById('article-valid-until') ? document.getElementById('article-valid-until').value : '';
+        const changesSummary = document.getElementById('article-changes-summary') ? document.getElementById('article-changes-summary').value : 'Criação';
+        const responsibleArea = document.getElementById('article-responsible-area') ? document.getElementById('article-responsible-area').value : '';
+
         const formData = new FormData();
         formData.append('title', title);
         formData.append('category', category);
@@ -297,6 +344,10 @@
         formData.append('visibility', visibility);
         formData.append('content', content);
         formData.append('action', action);
+        formData.append('version', version);
+        formData.append('valid_until', validUntil);
+        formData.append('changes_summary', changesSummary);
+        formData.append('responsible_area', responsibleArea);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         
         uploadedFiles.forEach((item, index) => {
@@ -324,5 +375,116 @@
             alert('Ocorreu um erro ao salvar o artigo.');
         });
     }
+
+    function startEditorTour() {
+        if (typeof Shepherd === 'undefined') return;
+        
+        const editorTour = new Shepherd.Tour({
+            defaultStepOptions: {
+                cancelIcon: { enabled: true },
+                classes: 'premium-tooltip',
+                scrollTo: { behavior: 'smooth', block: 'center' }
+            },
+            useModalOverlay: true
+        });
+
+        editorTour.addStep({
+            id: 'step-title',
+            title: 'Título do Artigo',
+            text: 'Defina um título descritivo para identificação do documento.',
+            attachTo: { element: '#article-title', on: 'bottom' },
+            buttons: [{ text: 'Próximo', action: editorTour.next, classes: 'shepherd-button-primary' }]
+        });
+
+        editorTour.addStep({
+            id: 'step-category',
+            title: 'Organização',
+            text: 'Selecione a categoria correspondente ou cadastre uma nova através do botão lateral.',
+            attachTo: { element: '#article-category', on: 'bottom' },
+            buttons: [
+                { text: 'Voltar', action: editorTour.back, classes: 'shepherd-button-secondary' },
+                { text: 'Próximo', action: editorTour.next, classes: 'shepherd-button-primary' }
+            ]
+        });
+
+        editorTour.addStep({
+            id: 'step-tags',
+            title: 'Palavras-chave',
+            text: 'Insira termos separados por vírgula para otimizar a indexação na busca.',
+            attachTo: { element: '#article-tags', on: 'bottom' },
+            buttons: [
+                { text: 'Voltar', action: editorTour.back, classes: 'shepherd-button-secondary' },
+                { text: 'Próximo', action: editorTour.next, classes: 'shepherd-button-primary' }
+            ]
+        });
+
+        editorTour.addStep({
+            id: 'step-content',
+            title: 'Editor Rico',
+            text: 'Utilize o editor para formatar o texto e estruturar o conteúdo do artigo.',
+            attachTo: { element: '#quill-editor', on: 'top' },
+            buttons: [
+                { text: 'Voltar', action: editorTour.back, classes: 'shepherd-button-secondary' },
+                { text: 'Próximo', action: editorTour.next, classes: 'shepherd-button-primary' }
+            ]
+        });
+
+        editorTour.addStep({
+            id: 'step-dropzone',
+            title: 'Anexos',
+            text: 'Anexe documentos adicionais, como PDFs ou mídias, arrastando-os para esta área.',
+            attachTo: { element: '#dropzone', on: 'top' },
+            buttons: [
+                { text: 'Voltar', action: editorTour.back, classes: 'shepherd-button-secondary' },
+                { text: 'Próximo', action: editorTour.next, classes: 'shepherd-button-primary' }
+            ]
+        });
+
+        editorTour.addStep({
+            id: 'step-actions',
+            title: 'Conclusão',
+            text: 'Visualize o resultado final, salve como rascunho ou realize a publicação.',
+            attachTo: { element: '.editor-actions', on: 'top' },
+            buttons: [
+                { text: 'Voltar', action: editorTour.back, classes: 'shepherd-button-secondary' },
+                { text: 'Concluir', action: editorTour.complete, classes: 'shepherd-button-primary' }
+            ]
+        });
+
+        editorTour.start();
+    }
+    function loadTemplate(templateId) {
+        if(!templateId) return;
+        
+        fetch(`/api/templates/${templateId}/`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                document.getElementById('article-title').value = data.title || '';
+                
+                if(data.category_id) {
+                    document.getElementById('article-category').value = data.category_id;
+                }
+                
+                document.getElementById('article-tags').value = data.default_tags || '';
+                
+                if(data.default_visibility) {
+                    document.getElementById('article-visibility').value = data.default_visibility;
+                }
+                
+                if(data.content_html) {
+                    if(window.quill) {
+                        window.quill.clipboard.dangerouslyPasteHTML(data.content_html);
+                    }
+                }
+            })
+            .catch(err => console.error("Error loading template:", err));
+    }
+    
+    document.getElementById('start-editor-tour').addEventListener('click', startEditorTour);
 </script>
 {% endblock %}

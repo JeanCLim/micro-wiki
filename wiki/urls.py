@@ -4,7 +4,7 @@ from .views import (
     CustomLoginView, CustomLogoutView, GatewayView,
     ArticleFrontendCreateView, ArticleReviewView, NotificationsAPIView,
     CategoryCreateAPIView, UserProfileView, SettingsView, UserCreateAPIView, ArticleFrontendUpdateView,
-    MasterAdminView, FavoriteToggleAPIView, ToggleDarkModeAPIView
+    MasterAdminView, FavoriteToggleAPIView, ToggleDarkModeAPIView, TemplateDataAPIView
 )
 
 urlpatterns = [
@@ -22,6 +22,7 @@ urlpatterns = [
     path('api/categories/novo/', CategoryCreateAPIView.as_view(), name='api_category_create'),
     path('api/users/novo/', UserCreateAPIView.as_view(), name='api_user_create'),
     path('api/toggle-dark-mode/', ToggleDarkModeAPIView.as_view(), name='api_toggle_dark_mode'),
+    path('api/templates/<int:template_id>/', TemplateDataAPIView.as_view(), name='api_template_data'),
     path('', HomeView.as_view(), name='home'),
     path('search/', SearchView.as_view(), name='search'),
     path('category/<slug:slug>/', CategoryDetailView.as_view(), name='category_detail'),

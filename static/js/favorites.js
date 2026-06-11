@@ -25,8 +25,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     const starIcon = document.getElementById('star-icon');
                     if (data.favorited) {
                         starIcon.setAttribute('fill', 'currentColor');
+                        // Add to sidebar
+                        const container = document.getElementById('sidebar-favorites-container');
+                        const list = document.getElementById('sidebar-favorites-list');
+                        if (container && list) {
+                            container.style.display = 'block';
+                            // Check if already exists
+                            if (!list.querySelector(`li[data-slug="${data.slug}"]`)) {
+                                const li = document.createElement('li');
+                                li.setAttribute('data-slug', data.slug);
+                                li.innerHTML = `<a href="${data.url}"><span class="icon"><svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></span> ${data.title}</a>`;
+                                list.appendChild(li);
+                            }
+                        }
                     } else {
                         starIcon.setAttribute('fill', 'none');
+                        // Remove from sidebar
+                        const container = document.getElementById('sidebar-favorites-container');
+                        const list = document.getElementById('sidebar-favorites-list');
+                        if (container && list) {
+                            const li = list.querySelector(`li[data-slug="${data.slug}"]`);
+                            if (li) {
+                                li.remove();
+                            }
+                            if (list.children.length === 0) {
+                                container.style.display = 'none';
+                            }
+                        }
                     }
                 } else {
                     console.error("Erro ao alternar o favorito.");

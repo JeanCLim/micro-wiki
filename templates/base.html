@@ -6,7 +6,8 @@
     <title>{% block title %}Micro-Wiki Ágil{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=7">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/css/shepherd.css"/>
     <script>
         // Apply theme immediately to prevent flashing
         const savedTheme = localStorage.getItem('theme') || 'light';
@@ -28,8 +29,11 @@
             </div>
             <div class="nav-center">
                 {% if not request.user.role == 'SUPERADMIN' or request.user.company %}
-                <form action="{% url 'search' %}" method="get" class="search-form-mini">
-                    <input type="text" name="q" placeholder="Pesquisar..." value="{{ query }}" autocomplete="off">
+                <form action="{% url 'search' %}" method="get" class="search-form-modern">
+                    <input type="text" name="q" placeholder="Pesquise o conhecimento que deseja..." value="{{ query }}" autocomplete="off">
+                    <button type="submit" class="search-btn-modern">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </button>
                 </form>
                 {% endif %}
             </div>
@@ -85,6 +89,18 @@
             </div>
             <div class="sidebar-content">
                 <ul class="sidebar-tree">
+                    <li id="sidebar-favorites-container" {% if not sidebar_favorites %}style="display: none;"{% endif %}>
+                        <details open>
+                            <summary><span class="icon"><svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg></span> Favoritos</summary>
+                            <ul id="sidebar-favorites-list">
+                                {% for fav in sidebar_favorites %}
+                                    {% if fav.article.status == 'APPROVED' %}
+                                        <li data-slug="{{ fav.article.slug }}"><a href="{% url 'article_detail' fav.article.slug %}"><span class="icon"><svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></span> {{ fav.article.title }}</a></li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </details>
+                    </li>
                     {% for cat in sidebar_categories %}
                     <li>
                         <details open>
@@ -230,5 +246,7 @@
             }
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/js/shepherd.min.js"></script>
+    <script src="{% static 'js/tour.js' %}"></script>
 </body>
 </html>

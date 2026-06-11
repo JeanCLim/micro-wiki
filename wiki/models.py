@@ -32,6 +32,9 @@ class WorkspaceSettings(models.Model):
         ('ENTERPRISE', 'Enterprise Blue'),
         ('SLATE', 'Slate Minimalist'),
         ('NORDIC', 'Nordic Forest'),
+        ('SNOW', 'Branco Neve (Minimalista)'),
+        ('PEARL', 'Branco Pérola (Quente)'),
+        ('SILVER', 'Branco Prata (Frio)'),
     )
     theme_preference = models.CharField(max_length=20, choices=THEME_CHOICES, default='ENTERPRISE')
     
@@ -125,6 +128,18 @@ class Article(models.Model):
 
     def get_absolute_url(self):
         return reverse('article_detail', args=[self.slug])
+
+class ArticleTemplate(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='article_templates', null=True, blank=True)
+    title = models.CharField(max_length=200)
+    content_html = models.TextField(blank=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    default_tags = models.CharField(max_length=255, blank=True, help_text="Separadas por vírgula")
+    default_visibility = models.CharField(max_length=20, choices=Article.VISIBILITY_CHOICES, default='PUBLIC')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.title
 
 class ApprovalNotification(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='notifications')

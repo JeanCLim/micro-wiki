@@ -103,8 +103,15 @@ class HomeView(LoginRequiredMixin, ListView):
         company = self.request.user.company
         if company:
             context['sidebar_categories'] = Category.objects.filter(company=company)
+            base_qs = Article.objects.filter(status='APPROVED', category__company=company)
         else:
             context['sidebar_categories'] = Category.objects.filter(company__isnull=True)
+            base_qs = Article.objects.filter(status='APPROVED', category__company__isnull=True)
+            
+        from .models import FavoriteArticle
+        fav_ids = FavoriteArticle.objects.filter(user=self.request.user).values('article')
+        context['favorite_articles'] = base_qs.filter(id__in=fav_ids).order_by('-created_at')
+        
         return context
 
 class ArticleDetailView(LoginRequiredMixin, DetailView):
@@ -162,13 +169,19 @@ class SearchView(LoginRequiredMixin, ListView):
     context_object_name = 'articles'
 
     def get_queryset(self):
-        query = self.request.GET.get('q')
-        if query:
+        query = self.request.GET.get('q', '').strip()
+        tag_filter = self.request.GET.get('tag', '').strip()
+        
+        if query or tag_filter:
             user = self.request.user
-            qs = Article.objects.filter(
-                Q(title__icontains=query) | Q(content__icontains=query),
-                status='APPROVED'
-            )
+            qs = Article.objects.filter(status='APPROVED')
+            
+            if query:
+                qs = qs.filter(Q(title__icontains=query) | Q(content__icontains=query))
+                
+            if tag_filter:
+                qs = qs.filter(tags__name=tag_filter)
+
             if getattr(user, 'company', None):
                 qs = qs.filter(category__company=user.company)
             else:
@@ -179,6 +192,7 @@ class SearchView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['query'] = self.request.GET.get('q', '')
+        context['selected_tag'] = self.request.GET.get('tag', '')
         return context
 
 def custom_404(request, exception):
@@ -192,11 +206,21 @@ from .models import Article, Category, Tag, ApprovalNotification, SystemUpdate
 class ArticleFrontendCreateView(LoginRequiredMixin, View):
     def get(self, request):
         company = request.user.company
+        from .models import ArticleTemplate
         if company:
             categories = Category.objects.filter(company=company)
+            templates = ArticleTemplate.objects.filter(company=company)
         else:
             categories = Category.objects.filter(company__isnull=True)
-        return render(request, 'article_editor.html', {'categories': categories})
+            templates = ArticleTemplate.objects.filter(company__isnull=True)
+            
+        context = {'categories': categories, 'templates': templates}
+        
+        template_id = request.GET.get('template_id')
+        if template_id:
+            context['initial_template'] = get_object_or_404(ArticleTemplate, id=template_id)
+            
+        return render(request, 'article_editor.html', context)
 
     def post(self, request):
         from .services import create_article
@@ -210,6 +234,11 @@ class ArticleFrontendCreateView(LoginRequiredMixin, View):
         action = request.POST.get('action') # 'draft' ou 'pending'
         cover_image = request.FILES.get('cover_image')
         attachment = request.FILES.get('attachment')
+        
+        version = request.POST.get('version', '01')
+        valid_until = request.POST.get('valid_until', '')
+        changes_summary = request.POST.get('changes_summary', 'Criação')
+        responsible_area = request.POST.get('responsible_area', '')
 
         try:
             article = create_article(
@@ -221,7 +250,11 @@ class ArticleFrontendCreateView(LoginRequiredMixin, View):
                 visibility=visibility,
                 action=action,
                 cover_image=cover_image,
-                attachment=attachment
+                attachment=attachment,
+                version=version,
+                valid_until=valid_until,
+                changes_summary=changes_summary,
+                responsible_area=responsible_area
             )
             return JsonResponse({'success': True, 'url': article.get_absolute_url()})
         except ValidationError as e:
@@ -314,11 +347,14 @@ class SettingsView(LoginRequiredMixin, View):
                 u.recent_articles = Article.objects.filter(author=u).order_by('-updated_at')[:3]
                 
             categories = Category.objects.filter(company=company)
+            from .models import ArticleTemplate
+            article_templates = ArticleTemplate.objects.filter(company=company)
             settings_obj, _ = WorkspaceSettings.objects.get_or_create(company=company)
         else:
             users = []
             categories = []
-        return render(request, 'settings.html', {'company': company, 'users': users, 'categories': categories, 'settings': settings_obj})
+            article_templates = []
+        return render(request, 'settings.html', {'company': company, 'users': users, 'categories': categories, 'settings': settings_obj, 'article_templates': article_templates})
         
     def post(self, request):
         from .models import WorkspaceSettings, CustomUser
@@ -400,8 +436,8 @@ class UserCreateAPIView(LoginRequiredMixin, View):
 class ArticleFrontendUpdateView(LoginRequiredMixin, View):
     def get(self, request, slug):
         article = get_object_or_404(Article, slug=slug)
-        # Verify permissions: must be author or admin
-        if article.author != request.user and request.user.role not in ['ADMIN', 'SUPERADMIN']:
+        # Verify permissions: must be ADMIN or SUPERADMIN
+        if request.user.role not in ['ADMIN', 'SUPERADMIN']:
             return redirect('home')
             
         company = request.user.company
@@ -417,8 +453,8 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
         from django.core.exceptions import ValidationError
         
         article = get_object_or_404(Article, slug=slug)
-        if article.author != request.user and request.user.role not in ['ADMIN', 'SUPERADMIN']:
-            return JsonResponse({'success': False, 'error': 'Permissão negada.'}, status=403)
+        if request.user.role not in ['ADMIN', 'SUPERADMIN']:
+            return JsonResponse({'success': False, 'error': 'Permissão negada. Apenas administradores podem editar artigos.'}, status=403)
             
         title = request.POST.get('title')
         content = request.POST.get('content')
@@ -428,6 +464,11 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
         action = request.POST.get('action')
         cover_image = request.FILES.get('cover_image')
         attachment = request.FILES.get('attachment')
+        
+        version = request.POST.get('version', '01')
+        valid_until = request.POST.get('valid_until', '')
+        changes_summary = request.POST.get('changes_summary', 'Criação')
+        responsible_area = request.POST.get('responsible_area', '')
         
         try:
             article = update_article(
@@ -440,7 +481,11 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
                 visibility=visibility,
                 action=action,
                 cover_image=cover_image,
-                attachment=attachment
+                attachment=attachment,
+                version=version,
+                valid_until=valid_until,
+                changes_summary=changes_summary,
+                responsible_area=responsible_area
             )
             return JsonResponse({'success': True, 'url': article.get_absolute_url()})
         except ValidationError as e:
@@ -511,5 +556,28 @@ class FavoriteToggleAPIView(LoginRequiredMixin, View):
         fav, created = FavoriteArticle.objects.get_or_create(user=request.user, article=article)
         if not created:
             fav.delete()
-            return JsonResponse({"favorited": False})
-        return JsonResponse({"favorited": True})
+            return JsonResponse({"favorited": False, "slug": slug})
+        return JsonResponse({
+            "favorited": True, 
+            "slug": slug,
+            "title": article.title,
+            "url": article.get_absolute_url()
+        })
+
+class TemplateDataAPIView(LoginRequiredMixin, View):
+    def get(self, request, template_id):
+        from .models import ArticleTemplate
+        from django.http import JsonResponse
+        t = get_object_or_404(ArticleTemplate, id=template_id)
+        
+        # Verify if template belongs to the same company
+        if t.company and request.user.company and t.company != request.user.company:
+            return JsonResponse({'error': 'Acesso negado'}, status=403)
+            
+        return JsonResponse({
+            'title': t.title,
+            'content_html': t.content_html,
+            'category_id': t.category.id if t.category else '',
+            'default_tags': t.default_tags,
+            'default_visibility': t.default_visibility
+        })

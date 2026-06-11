@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tour.addStep({
         id: 'step-search',
         title: 'Pesquisa Rápida',
-        text: 'Encontre tudo em segundos! Digite o que precisa ou clique na barra para testar.',
+        text: 'Utilize a barra para localizar artigos rapidamente.',
         attachTo: { element: '.search-form-mini input', on: 'bottom' },
         advanceOn: { selector: '.search-form-mini input', event: 'focus' },
         buttons: [
@@ -26,8 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tour.addStep({
         id: 'step-notif',
-        title: 'Fique por Dentro!',
-        text: 'Aqui ficam os avisos do sistema e pedidos de aprovação. Clique no sino para abrir o painel.',
+        title: 'Notificações',
+        text: 'Acesse suas notificações do sistema e aprovações pendentes.',
         attachTo: { element: '#notif-btn', on: 'bottom' },
         advanceOn: { selector: '#notif-btn, #notif-btn *', event: 'click' },
         buttons: [
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tour.addStep({
         id: 'step-profile',
         title: 'Central de Controle',
-        text: 'Sua central de controle. Clique aqui para acessar seu perfil, histórico de artigos e as configurações do sistema.',
+        text: 'Gerencie seu perfil, preferências e histórico de acesso.',
         attachTo: { element: '.profile-btn', on: 'bottom' },
         advanceOn: { selector: '.profile-btn, .profile-btn *', event: 'click' },
         buttons: [

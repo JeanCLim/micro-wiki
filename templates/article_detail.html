@@ -1,30 +1,40 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ article.title }} | Micro-Wiki{% endblock %}
 
 {% block content %}
 <article class="article-detail">
-    <header class="article-header">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <h1 style="margin: 0;">{{ article.title }}</h1>
-            <button id="favorite-btn" data-slug="{{ article.slug }}" title="Favoritar" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center;">
-                <svg id="star-icon" width="28" height="28" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="{% if is_favorited %}currentColor{% else %}none{% endif %}" style="color: var(--accent-blue); transition: all 0.2s;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-            </button>
-        </div>
-        <div id="csrf-wrapper" style="display:none;">{% csrf_token %}</div>
-        <div class="article-author-row">
-            <div class="author-avatar">👤</div>
-            <div class="author-info">
-                Por <strong>{{ article.author.username }}</strong>
-                <span class="meta-date">Atualizado em {{ article.updated_at|date:"d M Y" }}</span>
-                {% if article.status != 'APPROVED' %}
-                <span class="badge" style="background-color: var(--accent-blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #000; margin-left: 10px;">Status: {{ article.get_status_display }}</span>
+    <div class="article-header-card" style="display: flex; justify-content: space-between; align-items: stretch; flex-wrap: wrap; gap: 20px; background: var(--bg-sidebar); padding: 24px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 30px;">
+        <div style="flex: 1; min-width: 250px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <h1 style="margin: 0; line-height: 1.3; font-size: 2.2rem; font-weight: 600; word-break: break-word;">{{ article.title }}</h1>
+                <button id="favorite-btn" data-slug="{{ article.slug }}" title="Favoritar" style="background: none; border: none; cursor: pointer; padding: 0; display: inline-flex; align-items: center;">
+                    <svg id="star-icon" width="28" height="28" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="{% if is_favorited %}currentColor{% else %}none{% endif %}" style="color: var(--accent-blue); transition: all 0.2s;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                </button>
+                {% if request.user.role == 'ADMIN' or request.user.role == 'SUPERADMIN' %}
+                <a href="{% url 'article_update' article.slug %}" title="Editar Artigo" style="color: var(--text-secondary); margin-left: 10px; display: inline-flex; align-items: center; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-blue)'" onmouseout="this.style.color='var(--text-secondary)'">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </a>
                 {% endif %}
             </div>
         </div>
-    </header>
+        <div id="csrf-wrapper" style="display:none;">{% csrf_token %}</div>
+        <div style="flex-shrink: 0;">
+            <div class="article-author-row" style="white-space: nowrap; background: rgba(0,0,0,0.02); padding: 10px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 12px; border: 1px solid var(--border-color);">
+                <div class="author-avatar" style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff;">👤</div>
+                <div class="author-info" style="display: flex; flex-direction: column; font-size: 0.9rem;">
+                    <span>Por <strong>{{ article.author.username }}</strong></span>
+                    <span class="meta-date" style="color: var(--text-secondary); font-size: 0.8rem;">Atualizado em {{ article.updated_at|date:"d M Y" }}</span>
+                    {% if article.status != 'APPROVED' %}
+                    <span class="badge" style="background-color: var(--accent-blue); padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #000; margin-top: 4px; display: inline-block;">Status: {{ article.get_status_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 
     {% if article.status == 'PENDING' and request.user.role in 'ADMIN,SUPERADMIN' %}
     <div class="approval-actions" style="margin-bottom: 20px; padding: 15px; background-color: rgba(30, 174, 180, 0.1); border: 1px solid var(--accent-blue); border-radius: 6px;">
@@ -72,4 +82,9 @@
         {{ article.content|safe }}
     </div>
 </article>
+
+{% block scripts %}
+<script src="{% static 'js/favorites.js' %}?v=2"></script>
+{% endblock %}
+
 {% endblock %}
