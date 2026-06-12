@@ -104,7 +104,7 @@ header {
     align-items: center;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 50px;
+    border-radius: var(--border-radius-base);
     padding: 6px 8px 6px 20px;
     width: 450px;
     transition: box-shadow 0.2s, border-color 0.2s;
@@ -248,7 +248,7 @@ header {
     width: 320px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: var(--border-radius-base);
     z-index: 1;
     margin-top: 8px;
     overflow: hidden;
@@ -318,7 +318,7 @@ header {
 .sidebar-tree summary {
     cursor: pointer;
     padding: 8px;
-    border-radius: var(--border-radius-base);
+    border-radius: min(var(--border-radius-base), 12px);
     font-size: 0.95rem;
     font-weight: 500;
     color: var(--text-primary);
@@ -350,17 +350,15 @@ header {
     align-items: center;
     gap: 8px;
     padding: 6px 8px;
-    border-radius: var(--border-radius-base);
+    border-radius: min(var(--border-radius-base), 12px);
     color: var(--text-secondary);
     font-size: 0.9rem;
     text-decoration: none;
-    border-bottom: 1px solid var(--border-color);
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+    margin-bottom: 4px;
 }
 
 .sidebar-tree ul li:last-child a {
-    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .sidebar-icon {
@@ -433,7 +431,7 @@ header {
 .tab-selector {
     display: flex;
     background-color: var(--bg-main);
-    border-radius: 20px;
+    border-radius: var(--border-radius-base);
     padding: 4px;
     margin-bottom: 24px;
 }
@@ -444,7 +442,7 @@ header {
     border: none;
     color: var(--text-secondary);
     padding: 8px 0;
-    border-radius: 16px;
+    border-radius: var(--border-radius-base);
     cursor: pointer;
     font-weight: 600;
     transition: all 0.3s;
@@ -592,7 +590,7 @@ th, td { word-break: normal; }
 .article-body p { margin-bottom: 16px; }
 .article-body h2 { margin-top: 32px; margin-bottom: 16px; font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
 .article-body h3 { margin-top: 24px; margin-bottom: 12px; font-size: 1.2rem; }
-.article-card { background-color: var(--bg-sidebar); border: 1px solid var(--border-color); padding: 20px; border-radius: var(--border-radius-base); margin-bottom: 16px; }
+.article-card { background-color: var(--bg-sidebar); border: 1px solid var(--border-color); padding: 20px; border-radius: min(var(--border-radius-base), 16px); margin-bottom: 16px; }
 .article-card h2 { font-size: 1.3rem; margin-bottom: 8px; }
 .article-card h2 a { color: var(--text-primary); }
 .article-card p { color: var(--text-secondary); }
@@ -837,7 +835,7 @@ th, td { word-break: normal; }
     background-color: var(--input-bg) !important;
     color: var(--text-primary) !important;
     padding: 12px 16px !important;
-    border-radius: 6px !important;
+    border-radius: var(--border-radius-base) !important;
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
     width: 100%;
     font-size: 1rem;
@@ -925,7 +923,7 @@ th, td { word-break: normal; }
 .premium-tooltip.shepherd-element {
     background-color: #0F172A !important;
     color: #F8FAFC !important;
-    border-radius: 12px !important;
+    border-radius: var(--border-radius-base) !important;
     box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important;
     border: 1px solid #1E293B !important;
     padding: 0 !important;
@@ -962,7 +960,7 @@ th, td { word-break: normal; }
 .premium-tooltip .shepherd-button-primary {
     background-color: var(--accent-blue) !important;
     color: #FFF !important;
-    border-radius: 6px !important;
+    border-radius: var(--border-radius-base) !important;
     font-weight: 600 !important;
     padding: 8px 16px !important;
     border: none !important;

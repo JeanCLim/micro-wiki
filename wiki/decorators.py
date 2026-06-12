@@ -19,8 +19,8 @@ def global_superadmin_required():
         def _wrapped_view(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 return redirect('login')
-            if request.user.role == 'SUPERADMIN' and request.user.company is None:
+            if request.user.role == 'SUPERADMIN':
                 return view_func(request, *args, **kwargs)
-            return HttpResponseForbidden("Acesso negado: Rota restrita ao Master Global.")
+            raise PermissionDenied
         return _wrapped_view
     return decorator

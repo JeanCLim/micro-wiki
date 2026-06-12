@@ -132,14 +132,24 @@
                                 {% endif %}
                             </td>
                             <td style="padding: 12px; text-align: right;">
-                                <form method="POST" style="margin: 0;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="toggle_company">
-                                    <input type="hidden" name="company_id" value="{{ comp.id }}">
-                                    <button type="submit" class="btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; border-color: var(--text-secondary); color: var(--text-primary);">
-                                        {% if comp.is_active %}Suspender{% else %}Reativar{% endif %}
-                                    </button>
-                                </form>
+                                <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                                    <form method="POST" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="switch_company">
+                                        <input type="hidden" name="company_id" value="{{ comp.id }}">
+                                        <button type="submit" class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem; background-color: var(--accent-blue);">
+                                            Acessar Base
+                                        </button>
+                                    </form>
+                                    <form method="POST" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="toggle_company">
+                                        <input type="hidden" name="company_id" value="{{ comp.id }}">
+                                        <button type="submit" class="btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; border-color: var(--text-secondary); color: var(--text-primary);">
+                                            {% if comp.is_active %}Suspender{% else %}Reativar{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% empty %}

@@ -9,9 +9,20 @@
 <div style="display: grid; grid-template-columns: 300px 1fr; gap: 30px;">
     <!-- Resumo do Usuário -->
     <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; height: fit-content;">
-        <div style="width: 100px; height: 100px; background-color: var(--accent-blue); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #000; font-weight: bold;">
-            {{ request.user.username|make_list|first|upper }}
+        <div style="width: 100px; height: 100px; {% if not request.user.profile_picture %}background-color: var(--accent-blue);{% else %}background-color: #ffffff;{% endif %} border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #000; font-weight: bold; overflow: hidden;">
+            {% if request.user.profile_picture %}
+                <img src="{{ request.user.profile_picture.url }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+                {{ request.user.username|make_list|first|upper }}
+            {% endif %}
         </div>
+        
+        <form method="POST" action="{% url 'profile' %}" enctype="multipart/form-data" id="avatar-form" style="margin-bottom: 20px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_avatar">
+            <label for="avatar_input" style="cursor: pointer; color: var(--accent-blue); font-size: 0.85rem; display: inline-block; text-decoration: underline;">Alterar Foto de Perfil</label>
+            <input type="file" id="avatar_input" name="profile_picture" accept="image/*" style="display: none;" onchange="document.getElementById('avatar-form').submit();">
+        </form>
         <h2 style="margin: 0 0 10px 0;">{{ request.user.username }}</h2>
         <p style="color: var(--text-secondary); margin: 0 0 5px 0;">{{ request.user.email|default:"Sem e-mail cadastrado" }}</p>
         <span style="display: inline-block; background-color: rgba(20, 184, 166, 0.1); color: var(--accent-blue); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; margin-bottom: 20px;">
@@ -25,6 +36,7 @@
     </div>
 
     <!-- Tabela de Contribuições -->
+    {% if request.user.role != 'COMMON' %}
     <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
         <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem;">Minhas Contribuições</h2>
         
@@ -66,9 +78,208 @@
             </table>
         </div>
         {% else %}
-        <p style="color: var(--text-secondary); text-align: center; padding: 40px 0;">Você ainda não possui contribuições. <br><br> <a href="{% url 'article_create' %}" class="btn-primary" style="text-decoration: none; display: inline-block; margin-top: 10px;">Criar Artigo</a></p>
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px 0;">Você ainda não possui contribuições. 
+        <br><br> <a href="{% url 'article_create' %}" class="btn-primary" style="text-decoration: none; display: inline-block; margin-top: 10px;">Criar Artigo</a>
+        </p>
         {% endif %}
     </div>
+    {% endif %}
+
+    {% if request.user.role == 'COMMON' or request.user.role == 'EMPLOYEE' %}
+    <!-- Preferências Visuais -->
+    <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); {% if request.user.role != 'COMMON' %}margin-top: 30px; grid-column: 1 / -1;{% endif %}">
+        <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem;">Preferências Visuais</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 25px;">Personalize a aparência da Wiki para o seu usuário. Ninguém mais verá essas configurações.</p>
+        
+        <form method="POST" action="{% url 'profile' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_visuals">
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+                
+                <!-- Tema -->
+                <div style="grid-column: 1 / -1;">
+                    <h4 style="margin: 0 0 10px 0; color: var(--text-primary);">Tema Base</h4>
+                    <style>
+                        .theme-radio { display: none; }
+                        .theme-circle {
+                            width: 48px;
+                            height: 48px;
+                            border-radius: 50%;
+                            cursor: pointer;
+                            border: 3px solid transparent;
+                            transition: all 0.2s ease;
+                            display: inline-block;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                            overflow: hidden;
+                            background-clip: padding-box;
+                        }
+                        .theme-radio:checked + .theme-circle {
+                            border-color: var(--text-primary);
+                            transform: scale(1.1);
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        }
+                    </style>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <!-- ENTERPRISE -->
+                        <label title="Enterprise Blue">
+                            <input type="radio" name="theme_preference" value="ENTERPRISE" class="theme-radio" {% if request.user.theme_preference == 'ENTERPRISE' %}checked{% endif %}>
+                            <div class="theme-circle" style="background-color: #2563EB;"></div>
+                        </label>
+                        
+                        <!-- SLATE -->
+                        <label title="Slate Minimalist">
+                            <input type="radio" name="theme_preference" value="SLATE" class="theme-radio" {% if request.user.theme_preference == 'SLATE' %}checked{% endif %}>
+                            <div class="theme-circle" style="background-color: #475569;"></div>
+                        </label>
+                        
+                        <!-- NORDIC -->
+                        <label title="Nordic Forest">
+                            <input type="radio" name="theme_preference" value="NORDIC" class="theme-radio" {% if request.user.theme_preference == 'NORDIC' %}checked{% endif %}>
+                            <div class="theme-circle" style="background-color: #82A698;"></div>
+                        </label>
+                        
+                        <!-- SNOW -->
+                        <label title="Branco Neve (Minimalista)">
+                            <input type="radio" name="theme_preference" value="SNOW" class="theme-radio" {% if request.user.theme_preference == 'SNOW' %}checked{% endif %}>
+                            <div class="theme-circle" style="background-color: #E5E5E5; border: 1px solid #D4D4D4;"></div>
+                        </label>
+                        
+                        <!-- PEARL -->
+                        <label title="Branco Pérola (Quente)">
+                            <input type="radio" name="theme_preference" value="PEARL" class="theme-radio" {% if request.user.theme_preference == 'PEARL' %}checked{% endif %}>
+                            <div class="theme-circle" style="background-color: #E7E5E4; border: 1px solid #D6D3D1;"></div>
+                        </label>
+
+                        <!-- SILVER -->
+                        <label title="Branco Prata (Frio)">
+                            <input type="radio" name="theme_preference" value="SILVER" class="theme-radio" {% if request.user.theme_preference == 'SILVER' %}checked{% endif %}>
+                            <div class="theme-circle" style="background-color: #E2E8F0; border: 1px solid #CBD5E1;"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tipografia -->
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: var(--text-primary);">Família de Fontes</h4>
+                    <select name="font_family" style="width: 100%; padding: 10px; background-color: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--border-radius-base);">
+                        <option value="MODERN" {% if request.user.font_family == 'MODERN' %}selected{% endif %}>Modern (Inter, sem serifa)</option>
+                        <option value="CLASSIC" {% if request.user.font_family == 'CLASSIC' %}selected{% endif %}>Classic (Merriweather, com serifa)</option>
+                        <option value="TECHNICAL" {% if request.user.font_family == 'TECHNICAL' %}selected{% endif %}>Technical (Fira Code, monoespaçada)</option>
+                    </select>
+                </div>
+
+                <!-- Bordas -->
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: var(--text-primary);">Estilo de Bordas</h4>
+                    <div style="display: flex; gap: 10px;">
+                        <label style="flex: 1; text-align: center; border: 1px solid var(--border-color); padding: 8px; cursor: pointer; border-radius: 4px; {% if request.user.border_style == 'SHARP' %}background: rgba(20, 184, 166, 0.1); border-color: var(--accent-blue);{% endif %}">
+                            <input type="radio" name="border_style" value="SHARP" {% if request.user.border_style == 'SHARP' %}checked{% endif %} style="display: none;"> Reto
+                        </label>
+                        <label style="flex: 1; text-align: center; border: 1px solid var(--border-color); padding: 8px; cursor: pointer; border-radius: 8px; {% if request.user.border_style == 'ROUNDED' %}background: rgba(20, 184, 166, 0.1); border-color: var(--accent-blue);{% endif %}">
+                            <input type="radio" name="border_style" value="ROUNDED" {% if request.user.border_style == 'ROUNDED' %}checked{% endif %} style="display: none;"> Suave
+                        </label>
+                        <label style="flex: 1; text-align: center; border: 1px solid var(--border-color); padding: 8px; cursor: pointer; border-radius: 20px; {% if request.user.border_style == 'PILL' %}background: rgba(20, 184, 166, 0.1); border-color: var(--accent-blue);{% endif %}">
+                            <input type="radio" name="border_style" value="PILL" {% if request.user.border_style == 'PILL' %}checked{% endif %} style="display: none;"> Pílula
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Densidade -->
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: var(--text-primary);">Layout Compacto</h4>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" name="compact_layout" {% if request.user.compact_layout %}checked{% endif %} style="width: 18px; height: 18px; accent-color: var(--accent-blue);">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Reduz os espaços em branco para caber mais conteúdo.</span>
+                    </label>
+                </div>
+                
+            </div>
+            
+            <div style="margin-top: 25px; text-align: right;">
+                <button type="submit" class="btn-primary" style="padding: 10px 25px; font-weight: bold;">Salvar Preferências</button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Border Style Live Preview
+    const borderRadios = document.querySelectorAll('input[name="border_style"]');
+    borderRadios.forEach(el => {
+        el.addEventListener('change', function(e) {
+            const borders = {
+                'SHARP': "0px",
+                'ROUNDED': "8px",
+                'PILL': "9999px"
+            };
+            document.documentElement.style.setProperty('--border-radius-base', borders[e.target.value]);
+            
+            // Atualizar visual dos botões de borda
+            borderRadios.forEach(r => {
+                r.parentElement.style.background = 'transparent';
+                r.parentElement.style.borderColor = 'var(--border-color)';
+            });
+            e.target.parentElement.style.background = 'rgba(20, 184, 166, 0.1)';
+            e.target.parentElement.style.borderColor = 'var(--accent-blue)';
+        });
+    });
+
+    // Theme Live Preview
+    function updatePreviewTheme() {
+        const selectedThemeRadio = document.querySelector('input[name="theme_preference"]:checked');
+        if(!selectedThemeRadio) return;
+        const selectedTheme = selectedThemeRadio.value;
+        const mode = (localStorage.getItem('theme') === 'dark' || document.documentElement.getAttribute('data-theme') === 'dark') ? 'dark' : 'light';
+        
+        if (typeof GLOBAL_THEMES !== 'undefined') {
+            const themeVars = GLOBAL_THEMES[mode][selectedTheme];
+            if(themeVars) {
+                themeVars.split(';').forEach(pair => {
+                    if(!pair.trim()) return;
+                    const [key, value] = pair.split(':');
+                    if(key && value) {
+                        document.documentElement.style.setProperty(key.trim(), value.trim());
+                    }
+                });
+            }
+        }
+    }
+
+    document.querySelectorAll('.theme-radio').forEach(radio => {
+        radio.addEventListener('change', updatePreviewTheme);
+    });
+
+    // Se o tema da página for alterado pelo toggle no topo
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            setTimeout(updatePreviewTheme, 50);
+        });
+    }
+
+    // Compact Layout Live Preview
+    const compactToggle = document.querySelector('input[name="compact_layout"]');
+    if (compactToggle) {
+        compactToggle.addEventListener('change', function(e) {
+            document.documentElement.style.setProperty('--global-padding', e.target.checked ? '12px' : '24px');
+        });
+    }
+    // Font Family Live Preview
+    const fontSelect = document.querySelector('select[name="font_family"]');
+    if (fontSelect) {
+        fontSelect.addEventListener('change', function(e) {
+            const fonts = {
+                'MODERN': "'Inter', sans-serif",
+                'CLASSIC': "'Merriweather', serif",
+                'TECHNICAL': "'Fira Code', monospace"
+            };
+            document.documentElement.style.setProperty('--font-family', fonts[e.target.value]);
+        });
+    }
+});
+</script>
+    {% endif %}
 
 {% endblock %}

@@ -14,8 +14,30 @@ class Company(models.Model):
 
 class WorkspaceSettings(models.Model):
     company = models.OneToOneField(Company, on_delete=models.CASCADE, related_name='settings')
-    primary_color = models.CharField(max_length=7, default='#14B8A6')
     favicon = models.ImageField(upload_to='favicons/', blank=True, null=True)
+    
+    require_2fa = models.BooleanField(default=False)
+    session_timeout_minutes = models.IntegerField(default=120)
+    slack_webhook_url = models.URLField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"Configurações - {self.company.name}"
+
+class CustomUser(AbstractUser):
+    ROLE_CHOICES = (
+        ('COMMON', 'Usuário Comum'),
+        ('EMPLOYEE', 'Funcionário Comum'),
+        ('ADMIN', 'Administrador'),
+        ('SUPERADMIN', 'Superadmin'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='COMMON')
+    employee_code = models.CharField(max_length=20, blank=True, null=True, unique=True)
+    company = models.ForeignKey('Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
+    dark_mode = models.BooleanField(default=False)
+    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    
+    # Personal UI Customization
+    primary_color = models.CharField(max_length=7, default='#14B8A6')
     font_family = models.CharField(max_length=20, choices=[
         ('MODERN', 'Inter, sans-serif'),
         ('CLASSIC', 'Merriweather, serif'),
@@ -37,26 +59,7 @@ class WorkspaceSettings(models.Model):
         ('SILVER', 'Branco Prata (Frio)'),
     )
     theme_preference = models.CharField(max_length=20, choices=THEME_CHOICES, default='ENTERPRISE')
-    
-    require_2fa = models.BooleanField(default=False)
-    session_timeout_minutes = models.IntegerField(default=120)
-    slack_webhook_url = models.URLField(blank=True, null=True)
-    
-    def __str__(self):
-        return f"Configurações - {self.company.name}"
 
-class CustomUser(AbstractUser):
-    ROLE_CHOICES = (
-        ('COMMON', 'Usuário Comum'),
-        ('EMPLOYEE', 'Funcionário Comum'),
-        ('ADMIN', 'Administrador'),
-        ('SUPERADMIN', 'Superadmin'),
-    )
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='COMMON')
-    employee_code = models.CharField(max_length=20, blank=True, null=True, unique=True)
-    company = models.ForeignKey('Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
-    dark_mode = models.BooleanField(default=False)
-    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
     last_seen = models.DateTimeField(null=True, blank=True)
 
     @property

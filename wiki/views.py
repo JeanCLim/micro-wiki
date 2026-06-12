@@ -333,6 +333,24 @@ class UserProfileView(LoginRequiredMixin, View):
         articles = Article.objects.filter(author=request.user).order_by('-updated_at')
         return render(request, 'profile.html', {'articles': articles})
 
+    def post(self, request):
+        if request.POST.get('action') == 'update_avatar':
+            if 'profile_picture' in request.FILES:
+                request.user.profile_picture = request.FILES['profile_picture']
+                request.user.save()
+                
+        elif request.POST.get('action') == 'update_visuals':
+            if request.POST.get('font_family'):
+                request.user.font_family = request.POST.get('font_family')
+            if request.POST.get('border_style'):
+                request.user.border_style = request.POST.get('border_style')
+            if request.POST.get('theme_preference'):
+                request.user.theme_preference = request.POST.get('theme_preference')
+            request.user.compact_layout = request.POST.get('compact_layout') == 'on'
+            request.user.save()
+            
+        return redirect('profile')
+
 @method_decorator(role_required('ADMIN', 'SUPERADMIN'), name='dispatch')
 class SettingsView(LoginRequiredMixin, View):
     def get(self, request):
@@ -369,26 +387,7 @@ class SettingsView(LoginRequiredMixin, View):
             company.domain = request.POST.get('domain', company.domain)
             company.save()
             
-        elif action == 'update_branding':
-            settings_obj, _ = WorkspaceSettings.objects.get_or_create(company=company)
-            settings_obj.primary_color = request.POST.get('primary_color', settings_obj.primary_color)
-            if 'favicon' in request.FILES:
-                settings_obj.favicon = request.FILES['favicon']
-            
-            if request.POST.get('font_family'):
-                settings_obj.font_family = request.POST.get('font_family')
-                
-            if request.POST.get('border_style'):
-                settings_obj.border_style = request.POST.get('border_style')
-                
-            if request.POST.get('theme_preference'):
-                settings_obj.theme_preference = request.POST.get('theme_preference')
-                
-            settings_obj.compact_layout = request.POST.get('compact_layout') == 'on'
-            settings_obj.force_dark_mode = request.POST.get('force_dark_mode') == 'on'
-            
-            settings_obj.save()
-            
+
         elif action == 'update_security':
             settings_obj, _ = WorkspaceSettings.objects.get_or_create(company=company)
             settings_obj.require_2fa = request.POST.get('require_2fa') == 'on'
@@ -411,6 +410,35 @@ class SettingsView(LoginRequiredMixin, View):
             if u and u != request.user:
                 u.role = new_role
                 u.save()
+                
+        elif action == 'update_user_info':
+            user_id = request.POST.get('user_id')
+            new_username = request.POST.get('username')
+            new_email = request.POST.get('email')
+            u = CustomUser.objects.filter(id=user_id, company=company).first()
+            
+            if u and request.user.role in ['ADMIN', 'SUPERADMIN'] and u.role in ['COMMON', 'EMPLOYEE']:
+                if new_username:
+                    u.username = new_username
+                if new_email:
+                    u.email = new_email
+                u.save()
+                
+        elif action == 'update_appearance':
+            if request.POST.get('font_family'):
+                request.user.font_family = request.POST.get('font_family')
+            if request.POST.get('border_style'):
+                request.user.border_style = request.POST.get('border_style')
+            if request.POST.get('theme_preference'):
+                request.user.theme_preference = request.POST.get('theme_preference')
+            request.user.compact_layout = request.POST.get('compact_layout') == 'on'
+            request.user.save()
+            
+            # Save global favicon if provided
+            if 'favicon' in request.FILES:
+                settings_obj, _ = WorkspaceSettings.objects.get_or_create(company=company)
+                settings_obj.favicon = request.FILES['favicon']
+                settings_obj.save()
                 
         return redirect('settings')
 
@@ -496,6 +524,10 @@ from .decorators import global_superadmin_required
 @method_decorator(global_superadmin_required(), name='dispatch')
 class MasterAdminView(LoginRequiredMixin, View):
     def get(self, request):
+        if request.user.company is not None:
+            request.user.company = None
+            request.user.save(update_fields=['company'])
+            
         from .models import Company, CustomUser, Category
         companies = Company.objects.all()
         # Exclude self to not show the superadmin in the list
@@ -547,7 +579,19 @@ class MasterAdminView(LoginRequiredMixin, View):
                     comp = Company.objects.filter(id=target).first()
                     if comp and not Category.objects.filter(slug=slug, company=comp).exists():
                         Category.objects.create(name=name, slug=slug, company=comp, is_special=True)
+                        
+        elif action == 'switch_company':
+            company_id = request.POST.get('company_id')
+            try:
+                comp = Company.objects.get(id=company_id)
+                request.user.company = comp
+                request.user.save(update_fields=['company'])
+                return redirect('home')
+            except Company.DoesNotExist:
+                pass
+                
         return redirect('master_admin')
+
 
 class FavoriteToggleAPIView(LoginRequiredMixin, View):
     def post(self, request, slug):

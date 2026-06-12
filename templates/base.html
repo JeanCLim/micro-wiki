@@ -6,14 +6,65 @@
     <title>{% block title %}Micro-Wiki Ágil{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=7">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=9">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/css/shepherd.css"/>
+    <style>
+        {% if request.user.is_authenticated %}
+        :root {
+            {% if request.user.primary_color %}--accent-blue: {{ request.user.primary_color }} !important;{% endif %}
+            {% if request.user.font_family == 'MODERN' %}--font-family: 'Inter', sans-serif;{% endif %}
+            {% if request.user.font_family == 'CLASSIC' %}--font-family: 'Merriweather', serif;{% endif %}
+            {% if request.user.font_family == 'TECHNICAL' %}--font-family: 'Fira Code', monospace;{% endif %}
+            
+            {% if request.user.border_style == 'SHARP' %}--border-radius-base: 0px;{% endif %}
+            {% if request.user.border_style == 'ROUNDED' %}--border-radius-base: 8px;{% endif %}
+            {% if request.user.border_style == 'PILL' %}--border-radius-base: 9999px;{% endif %}
+
+            {% if request.user.compact_layout %}--global-padding: 12px;{% else %}--global-padding: 24px;{% endif %}
+        }
+        {% endif %}
+    </style>
     <script>
+        const GLOBAL_THEMES = {
+            'light': {
+                'ENTERPRISE': '--bg-main: #E0E7FF; --bg-surface: #FFFFFF; --bg-header: rgba(224, 231, 255, 0.9); --bg-sidebar: rgba(243, 244, 246, 0.9); --text-primary: #1E3A8A; --accent-blue: #2563EB; --accent-blue-hover: #1D4ED8; --border-color: #BFDBFE; --input-bg: #FFFFFF; --table-header-bg: #DBEAFE; --table-border: #BFDBFE; --text-secondary: #3B82F6; --bg-footer: #C7D2FE; --timeline-color: #2563EB;',
+                'SLATE': '--bg-main: #E2E8F0; --bg-surface: #F8FAFC; --bg-header: rgba(226, 232, 240, 0.9); --bg-sidebar: rgba(241, 245, 249, 0.9); --text-primary: #0F172A; --accent-blue: #475569; --accent-blue-hover: #334155; --border-color: #CBD5E1; --input-bg: #FFFFFF; --table-header-bg: #F1F5F9; --table-border: #CBD5E1; --text-secondary: #64748B; --bg-footer: #CBD5E1; --timeline-color: #475569;',
+                'NORDIC': '--bg-main: #DDE5E2; --bg-surface: #F4F6F5; --bg-header: rgba(221, 229, 226, 0.9); --bg-sidebar: rgba(235, 240, 238, 0.9); --text-primary: #1B2B24; --accent-blue: #5C7A6D; --accent-blue-hover: #4A6358; --border-color: #C2D1CB; --input-bg: #FFFFFF; --table-header-bg: #E8EDE9; --table-border: #C2D1CB; --text-secondary: #5C7A6D; --bg-footer: #C2D1CB; --timeline-color: #5C7A6D;',
+                'SNOW': '--bg-main: #F4F4F5; --bg-surface: #FFFFFF; --bg-header: rgba(244, 244, 245, 0.9); --bg-sidebar: rgba(250, 250, 250, 0.9); --text-primary: #18181B; --accent-blue: #FFFFFF; --accent-blue-hover: #E4E4E7; --border-color: #D4D4D4; --input-bg: #FFFFFF; --table-header-bg: #E4E4E7; --table-border: #D4D4D4; --text-secondary: #52525B; --bg-footer: #E4E4E7; --timeline-color: #52525B; --link-color: #3F3F46;',
+                'PEARL': '--bg-main: #F5EFEB; --bg-surface: #FDFCFB; --bg-header: rgba(245, 239, 235, 0.9); --bg-sidebar: rgba(250, 248, 245, 0.9); --text-primary: #4A3F35; --accent-blue: #FFFFFF; --accent-blue-hover: #EAE3DC; --border-color: #E3D8C8; --input-bg: #FFFFFF; --table-header-bg: #EAE3DC; --table-border: #E3D8C8; --text-secondary: #8C7B6B; --bg-footer: #E3D8C8; --timeline-color: #8C7B6B; --link-color: #5E504A;',
+                'SILVER': '--bg-main: #D1D5DB; --bg-surface: #F3F4F6; --bg-header: rgba(209, 213, 219, 0.9); --bg-sidebar: rgba(229, 231, 235, 0.9); --text-primary: #111827; --accent-blue: #FFFFFF; --accent-blue-hover: #E5E7EB; --border-color: #9CA3AF; --input-bg: #FFFFFF; --table-header-bg: #E5E7EB; --table-border: #9CA3AF; --text-secondary: #4B5563; --bg-footer: #9CA3AF; --timeline-color: #4B5563; --link-color: #374151;'
+            },
+            'dark': {
+                'ENTERPRISE': '--bg-main: #0B1120; --bg-surface: #1E293B; --bg-header: rgba(11, 17, 32, 0.9); --bg-sidebar: rgba(15, 23, 42, 0.9); --text-primary: #F8FAFC; --accent-blue: #2563EB; --accent-blue-hover: #3B82F6; --border-color: #1E293B; --input-bg: #0F172A; --table-header-bg: #1E293B; --table-border: #1E293B; --text-secondary: #94A3B8; --bg-footer: #020617; --timeline-color: #2563EB;',
+                'SLATE': '--bg-main: #09090B; --bg-surface: #18181B; --bg-header: rgba(9, 9, 11, 0.9); --bg-sidebar: rgba(24, 24, 27, 0.9); --text-primary: #FAFAFA; --accent-blue: #3F3F46; --accent-blue-hover: #525252; --border-color: #27272A; --input-bg: #09090B; --table-header-bg: #27272A; --table-border: #27272A; --text-secondary: #A1A1AA; --bg-footer: #000000; --timeline-color: #3F3F46;',
+                'NORDIC': '--bg-main: #131A17; --bg-surface: #1F2C27; --bg-header: rgba(19, 26, 23, 0.9); --bg-sidebar: rgba(26, 36, 33, 0.9); --text-primary: #E8F0EC; --accent-blue: #405C50; --accent-blue-hover: #527566; --border-color: #2A3B34; --input-bg: #131A17; --table-header-bg: #2A3B34; --table-border: #2A3B34; --text-secondary: #9EB5A9; --bg-footer: #0B0F0E; --timeline-color: #405C50;',
+                'SNOW': '--bg-main: #000000; --bg-surface: #18181B; --bg-header: rgba(0, 0, 0, 0.9); --bg-sidebar: rgba(24, 24, 27, 0.9); --text-primary: #FFFFFF; --accent-blue: #27272A; --accent-blue-hover: #3F3F46; --border-color: #3F3F46; --input-bg: #09090B; --table-header-bg: #27272A; --table-border: #3F3F46; --text-secondary: #A1A1AA; --bg-footer: #000000; --timeline-color: #52525B; --link-color: #A1A1AA;',
+                'PEARL': '--bg-main: #1A1614; --bg-surface: #2E2724; --bg-header: rgba(26, 22, 20, 0.9); --bg-sidebar: rgba(46, 39, 36, 0.9); --text-primary: #F5EFEB; --accent-blue: #3D332F; --accent-blue-hover: #4A3F3A; --border-color: #4A3F3A; --input-bg: #1A1614; --table-header-bg: #3D332F; --table-border: #4A3F3A; --text-secondary: #A89B92; --bg-footer: #120F0E; --timeline-color: #5E504A; --link-color: #A89B92;',
+                'SILVER': '--bg-main: #111827; --bg-surface: #1F2937; --bg-header: rgba(17, 24, 39, 0.9); --bg-sidebar: rgba(31, 41, 55, 0.9); --text-primary: #F9FAFB; --accent-blue: #374151; --accent-blue-hover: #4B5563; --border-color: #4B5563; --input-bg: #111827; --table-header-bg: #374151; --table-border: #4B5563; --text-secondary: #9CA3AF; --bg-footer: #030712; --timeline-color: #6B7280; --link-color: #9CA3AF;'
+            }
+        };
+
+        function applyWorkspaceTheme(isDark) {
+            const themePref = "{{ request.user.theme_preference|default:'ENTERPRISE' }}";
+            const themeVars = GLOBAL_THEMES[isDark ? 'dark' : 'light'][themePref];
+            if (themeVars) {
+                themeVars.split(';').forEach(pair => {
+                    if(!pair.trim()) return;
+                    const [key, value] = pair.split(':');
+                    if(key && value) {
+                        document.documentElement.style.setProperty(key.trim(), value.trim());
+                    }
+                });
+            }
+        }
+
         // Apply theme immediately to prevent flashing
         const savedTheme = localStorage.getItem('theme') || 'light';
-        if (savedTheme === 'dark') {
+        const isDark = (savedTheme === 'dark');
+        if (isDark) {
             document.documentElement.setAttribute('data-theme', 'dark');
         }
+        applyWorkspaceTheme(isDark);
     </script>
 </head>
 <body>
@@ -38,8 +89,10 @@
                 {% endif %}
             </div>
             <div class="nav-right">
-                {% if not request.user.role == 'SUPERADMIN' or request.user.company %}
+                {% if request.user.role != 'COMMON' %}
+                {% if request.user.role != 'SUPERADMIN' or request.user.company %}
                 <a href="{% url 'article_create' %}" class="btn-create">Criar</a>
+                {% endif %}
                 {% endif %}
                 
                 <button id="theme-toggle" onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; color: var(--text-primary); margin-right: 15px; display: flex; align-items: center;"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></button>
@@ -67,11 +120,20 @@
 
                 <div class="profile-dropdown">
                     <button class="profile-btn" onclick="toggleProfileMenu(event)">
-                        <span class="avatar"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></span>
+                        <span class="avatar" style="overflow: hidden; display: flex; align-items: center; justify-content: center; {% if request.user.is_authenticated and request.user.profile_picture %}background-color: #ffffff;{% endif %}">
+                            {% if request.user.is_authenticated and request.user.profile_picture %}
+                                <img src="{{ request.user.profile_picture.url }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                            {% else %}
+                                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            {% endif %}
+                        </span>
                         <span class="username">{{ request.user.username|default:"Conta" }}</span>
                     </button>
                     <div class="dropdown-content" id="profile-dropdown-content">
                         <a href="{% url 'profile' %}">Minha Conta</a>
+                        {% if request.user.role == 'SUPERADMIN' %}
+                        <a href="{% url 'master_admin' %}" style="color: var(--accent-blue); font-weight: bold;">👑 Painel Master Global</a>
+                        {% endif %}
                         {% if request.user.role == 'ADMIN' or request.user.role == 'SUPERADMIN' %}
                         <a href="{% url 'settings' %}">Configurações</a>
                         {% endif %}
@@ -209,15 +271,19 @@
             const toggleBtn = document.getElementById('theme-toggle');
             const sunIcon = `<svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
             const moonIcon = `<svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>`;
+            let newIsDark = false;
             if (currentTheme === 'dark') {
                 document.documentElement.removeAttribute('data-theme');
                 localStorage.setItem('theme', 'light');
                 toggleBtn.innerHTML = moonIcon;
+                newIsDark = false;
             } else {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 localStorage.setItem('theme', 'dark');
                 toggleBtn.innerHTML = sunIcon;
+                newIsDark = true;
             }
+            applyWorkspaceTheme(newIsDark);
         }
         
         // Fetch initially
