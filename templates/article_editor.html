@@ -36,7 +36,7 @@
                     <option value="{{ cat.id }}" {% if article and article.category.id == cat.id %}selected{% elif initial_template and initial_template.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                     {% endfor %}
                 </select>
-                <button type="button" onclick="document.getElementById('category-modal').showModal()" style="background-color: var(--accent-blue); border: none; color: #000; border-radius: 6px; width: 48px; height: 48px; flex-shrink: 0; cursor: pointer; font-size: 1.5rem; font-weight: bold; display: flex; justify-content: center; align-items: center; transition: background-color 0.2s;">+</button>
+                <button type="button" onclick="document.getElementById('category-modal').showModal()" style="background-color: var(--accent-blue); border: none; color: #FFFFFF; border-radius: 6px; width: 48px; height: 48px; flex-shrink: 0; cursor: pointer; font-size: 1.5rem; font-weight: bold; display: flex; justify-content: center; align-items: center; transition: background-color 0.2s;">+</button>
             </div>
         </div>
         <div class="form-group" style="margin: 0;">
@@ -129,7 +129,7 @@
 
     <div style="display: flex; justify-content: flex-end; gap: 10px;">
         <button type="button" onclick="document.getElementById('category-modal').close()" style="background: transparent; color: var(--text-secondary); border: none; cursor: pointer;">Cancelar</button>
-        <button type="button" onclick="createCategory()" style="background-color: var(--accent-blue); color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Salvar</button>
+        <button type="button" onclick="createCategory()" style="background-color: var(--accent-blue); color: #FFFFFF; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Salvar</button>
     </div>
 </dialog>
 
@@ -382,10 +382,9 @@
         const editorTour = new Shepherd.Tour({
             defaultStepOptions: {
                 cancelIcon: { enabled: true },
-                classes: 'premium-tooltip',
                 scrollTo: { behavior: 'smooth', block: 'center' }
             },
-            useModalOverlay: true
+            useModalOverlay: false
         });
 
         editorTour.addStep({

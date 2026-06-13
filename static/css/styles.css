@@ -31,6 +31,7 @@
     --table-border: rgba(255, 255, 255, 0.05);
     --input-bg: #1E293B;
     --input-border: #475569;
+    color-scheme: dark;
 }
 
 * {
@@ -145,7 +146,7 @@ header {
 
 .search-form-modern .search-btn-modern {
     background-color: var(--accent-blue);
-    color: #000;
+    color: #FFFFFF;
     border: none;
     border-radius: 50%;
     width: 38px;
@@ -171,7 +172,7 @@ header {
 
 .btn-create {
     background-color: var(--accent-blue);
-    color: #000;
+    color: #FFFFFF;
     padding: 6px 16px;
     border-radius: var(--border-radius-base);
     font-weight: 600;
@@ -364,7 +365,7 @@ header {
 .sidebar-icon {
     width: 18px;
     height: 18px;
-    color: var(--link-color, var(--accent-blue));
+    color: var(--text-secondary);
     flex-shrink: 0;
 }
 
@@ -524,7 +525,7 @@ header {
 
 .btn-primary {
     background-color: var(--accent-blue);
-    color: #000;
+    color: #FFFFFF;
     border: none;
     padding: 12px;
     border-radius: var(--border-radius-base);
@@ -924,19 +925,12 @@ th, td { word-break: normal; }
     background-color: #0F172A !important;
     color: #F8FAFC !important;
     border-radius: var(--border-radius-base) !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important;
     border: 1px solid #1E293B !important;
     padding: 0 !important;
 }
-.premium-tooltip.shepherd-element[data-popper-placement^="bottom"] {
-    animation: tooltipBounceBottom 2.5s ease-in-out infinite !important;
-}
-.premium-tooltip.shepherd-element[data-popper-placement^="top"] {
-    animation: tooltipBounceTop 2.5s ease-in-out infinite !important;
-}
+
 .premium-tooltip .shepherd-arrow:before {
     background-color: #0F172A !important;
-    border: 1px solid #1E293B !important;
 }
 .premium-tooltip .shepherd-header {
     background-color: transparent !important;
@@ -958,7 +952,7 @@ th, td { word-break: normal; }
     padding: 0 1.5rem 1.5rem !important;
 }
 .premium-tooltip .shepherd-button-primary {
-    background-color: var(--accent-blue) !important;
+    background-color: #14B8A6 !important;
     color: #FFF !important;
     border-radius: var(--border-radius-base) !important;
     font-weight: 600 !important;
@@ -967,7 +961,7 @@ th, td { word-break: normal; }
     transition: background-color 0.2s !important;
 }
 .premium-tooltip .shepherd-button-primary:hover {
-    background-color: var(--accent-blue-hover) !important;
+    background-color: #0D9488 !important;
 }
 .premium-tooltip .shepherd-button-secondary {
     color: #94A3B8 !important;
