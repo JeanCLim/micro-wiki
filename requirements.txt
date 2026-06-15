@@ -11,3 +11,5 @@ python-magic-bin==0.4.14
 python-magic-bin==0.4.14
 sqlparse==0.5.5
 tzdata==2026.2
+requests
+django-redis==5.4.0

@@ -1,126 +1,80 @@
-from django.utils.text import slugify
-from django.core.exceptions import ValidationError
-from .models import Article, Category, Tag, ApprovalNotification
-from .validators import validate_mime_type, validate_file_size_and_role, validate_image_size_strict
+import requests
+import datetime
+from django.core.cache import cache
 
-def validate_and_process_files(article, request_user, cover_image=None, attachment=None):
-    if cover_image:
-        validate_mime_type(cover_image)
-        if hasattr(cover_image, 'content_type') and not cover_image.content_type.startswith('image/'):
-            raise ValidationError("O arquivo de capa deve ser uma imagem válida.")
-        validate_image_size_strict(cover_image)
-        article.cover_image = cover_image
+class HolidayService:
+    """
+    Serviço de alta performance para buscar e cachear feriados.
+    """
+    @staticmethod
+    def get_petrolina_holidays(year):
+        cache_key = f'holidays_petrolina_{year}'
+        cached_data = cache.get(cache_key)
         
-    if attachment:
-        validate_mime_type(attachment)
-        validate_file_size_and_role(attachment, request_user.role)
-        article.attachment = attachment
-
-def create_article(user, title, content, category_id, tags_raw, visibility, action, cover_image=None, attachment=None, version="01", valid_until=None, changes_summary="Criação", responsible_area=""):
-    if not title or not content or not category_id:
-        raise ValidationError('Campos obrigatórios faltando.')
-
-    slug = slugify(title)
-    try:
-        category = Category.objects.get(id=category_id)
-    except Category.DoesNotExist:
-        raise ValidationError('Categoria não encontrada.')
-        
-    status = 'DRAFT'
-    if action == 'pending':
-        status = 'PENDING'
-    if user.role in ['ADMIN', 'SUPERADMIN'] and action == 'publish':
-        status = 'APPROVED'
-
-    article = Article(
-        title=title,
-        slug=slug,
-        content=content,
-        category=category,
-        author=user,
-        status=status,
-        visibility=visibility,
-        version=version,
-        valid_until=valid_until if valid_until else None,
-        changes_summary=changes_summary,
-        responsible_area=responsible_area
-    )
-    
-    validate_and_process_files(article, user, cover_image, attachment)
-    
-    article.save()
-
-    if tags_raw:
-        tag_names = [t.strip() for t in tags_raw.split(',') if t.strip()]
-        for t_name in tag_names:
-            t_slug = slugify(t_name)
-            tag_obj, _ = Tag.objects.get_or_create(slug=t_slug, defaults={'name': t_name})
-            article.tags.add(tag_obj)
-    
-    if status == 'PENDING':
-        ApprovalNotification.objects.create(article=article)
-
-    return article
-
-def update_article(article, user, title, content, category_id, tags_raw, visibility, action, cover_image=None, attachment=None, version="01", valid_until=None, changes_summary="Criação", responsible_area=""):
-    if not title or not content or not category_id:
-        raise ValidationError('Campos obrigatórios faltando.')
-
-    try:
-        category = Category.objects.get(id=category_id)
-    except Category.DoesNotExist:
-        raise ValidationError('Categoria não encontrada.')
-
-    article.title = title
-    article.slug = slugify(title)
-    article.content = content
-    article.category = category
-    article.visibility = visibility
-    article.version = version
-    article.valid_until = valid_until if valid_until else None
-    article.changes_summary = changes_summary
-    article.responsible_area = responsible_area
-
-    status = 'DRAFT'
-    if action == 'pending':
-        status = 'PENDING'
-    if user.role in ['ADMIN', 'SUPERADMIN'] and action == 'publish':
-        status = 'APPROVED'
-        
-    article.status = status
-    
-    validate_and_process_files(article, user, cover_image, attachment)
-    
-    article.save()
-
-    article.tags.clear()
-    if tags_raw:
-        tag_names = [t.strip() for t in tags_raw.split(',') if t.strip()]
-        for t_name in tag_names:
-            t_slug = slugify(t_name)
-            tag_obj, _ = Tag.objects.get_or_create(slug=t_slug, defaults={'name': t_name})
-            article.tags.add(tag_obj)
+        if cached_data is not None:
+            return cached_data
             
-    if status == 'PENDING':
-        ApprovalNotification.objects.create(article=article)
-
-    return article
-
-def create_category(user, name, is_special_raw):
-    if not name:
-        raise ValidationError('Nome não informado.')
+        holidays_list = []
         
-    is_special = is_special_raw in ['on', 'true', '1', True]
-    slug = slugify(name)
-    company = user.company
-    
-    if Category.objects.filter(slug=slug, company=company).exists():
-        raise ValidationError('Categoria já existe.')
+        # 1. Buscar feriados nacionais na Brasil API
+        try:
+            response = requests.get(f'https://brasilapi.com.br/api/feriados/v1/{year}', timeout=5)
+            if response.status_code == 200:
+                national_data = response.json()
+                for item in national_data:
+                    holidays_list.append({
+                        'date': item['date'],
+                        'name': item['name'],
+                        'type': 'NACIONAL'
+                    })
+            else:
+                HolidayService._append_national_fallback(holidays_list, year)
+        except requests.exceptions.RequestException:
+            # Em caso de falha de conexão
+            HolidayService._append_national_fallback(holidays_list, year)
+            
+        # 2. Feriados Estaduais (Pernambuco)
+        holidays_list.append({
+            'date': f'{year}-03-06',
+            'name': 'Data Magna de Pernambuco',
+            'type': 'ESTADUAL'
+        })
         
-    category = Category.objects.create(
-        name=name,
-        slug=slug,
-        company=company,
-        is_special=is_special
-    )
-    return category
+        # 3. Feriados Municipais (Petrolina)
+        municipal_holidays = [
+            ('06-24', 'São João'),
+            ('08-15', 'Nossa Senhora Rainha dos Anjos'),
+            ('09-21', 'Emancipação Política de Petrolina')
+        ]
+        
+        for md, name in municipal_holidays:
+            holidays_list.append({
+                'date': f'{year}-{md}',
+                'name': name,
+                'type': 'MUNICIPAL'
+            })
+            
+        # Salva no cache. Dependendo do backend de cache, None significa cache eterno.
+        cache.set(cache_key, holidays_list, timeout=None)
+        
+        return holidays_list
+
+    @staticmethod
+    def _append_national_fallback(holidays_list, year):
+        # Fallback de emergência (Hardcoded) caso a Brasil API fique offline
+        national_dates = [
+            ('01-01', 'Confraternização Universal'),
+            ('04-21', 'Tiradentes'),
+            ('05-01', 'Dia do Trabalhador'),
+            ('09-07', 'Independência do Brasil'),
+            ('10-12', 'Nossa Senhora Aparecida'),
+            ('11-02', 'Finados'),
+            ('11-15', 'Proclamação da República'),
+            ('12-25', 'Natal'),
+        ]
+        for md, name in national_dates:
+            holidays_list.append({
+                'date': f'{year}-{md}',
+                'name': name,
+                'type': 'NACIONAL'
+            })

@@ -4,7 +4,8 @@ from .views import (
     CustomLoginView, CustomLogoutView, GatewayView,
     ArticleFrontendCreateView, ArticleReviewView, NotificationsAPIView,
     CategoryCreateAPIView, UserProfileView, SettingsView, UserCreateAPIView, ArticleFrontendUpdateView,
-    MasterAdminView, FavoriteToggleAPIView, ToggleDarkModeAPIView, TemplateDataAPIView
+    MasterAdminView, FavoriteToggleAPIView, ToggleDarkModeAPIView, TemplateDataAPIView,
+    FullCalendarView, EventsAPIView, EventCreateAPIView, EventTypeCreateAPIView
 )
 
 urlpatterns = [
@@ -25,6 +26,10 @@ urlpatterns = [
     path('api/templates/<int:template_id>/', TemplateDataAPIView.as_view(), name='api_template_data'),
     path('', HomeView.as_view(), name='home'),
     path('search/', SearchView.as_view(), name='search'),
+    path('calendario/', FullCalendarView.as_view(), name='calendar'),
+    path('api/events/', EventsAPIView.as_view(), name='api_events'),
+    path('api/events/create/', EventCreateAPIView.as_view(), name='api_events_create'),
+    path('api/events/types/create/', EventTypeCreateAPIView.as_view(), name='api_event_types_create'),
     path('category/<slug:slug>/', CategoryDetailView.as_view(), name='category_detail'),
     path('artigo/<slug:slug>/', ArticleDetailView.as_view(), name='article_detail'),
 ]

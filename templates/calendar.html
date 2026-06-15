@@ -1,0 +1,592 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calendário de Eventos - MicroWiki{% endblock %}
+
+{% block content %}
+<!-- FullCalendar Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/pt-br.global.min.js"></script>
+
+<!-- Flatpickr (Melhor seletor de Horários) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+
+
+<style>
+    /* FullCalendar Overrides for Dark Mode / Custom Theme Support */
+    .fc {
+        --fc-border-color: var(--border-color);
+        --fc-button-text-color: var(--text-primary);
+        --fc-button-bg-color: var(--bg-surface);
+        --fc-button-border-color: var(--border-color);
+        --fc-button-hover-bg-color: var(--bg-main);
+        --fc-button-hover-border-color: var(--border-color);
+        
+        /* Cores mais claras e suaves para os botões do calendário, integradas com o tema */
+        --fc-button-active-bg-color: var(--bg-main); /* Fundo claro ativo */
+        --fc-button-active-border-color: var(--accent-blue);
+        --fc-event-bg-color: var(--accent-blue);
+        --fc-event-border-color: var(--accent-blue);
+        --fc-event-text-color: #fff;
+        --fc-page-bg-color: var(--bg-main);
+        --fc-neutral-bg-color: var(--bg-surface);
+        --fc-neutral-text-color: var(--text-primary);
+        --fc-today-bg-color: rgba(37, 99, 235, 0.1);
+    }
+    
+    /* Força o texto do botão ativo para a cor primária ou azul para garantir a leitura */
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active {
+        color: var(--accent-blue) !important;
+        background-color: var(--bg-main) !important;
+        border-color: var(--border-color) !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    #calendar-container {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-base);
+        padding: var(--global-padding);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    input[type="color"].circular-color-btn {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        padding: 0;
+        background: transparent;
+    }
+    input[type="color"].circular-color-btn::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    input[type="color"].circular-color-btn::-webkit-color-swatch {
+        border: none;
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    }
+    input[type="color"].circular-color-btn::-moz-color-swatch {
+        border: none;
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    }
+
+    .fc-theme-standard td, .fc-theme-standard th {
+        border-color: var(--border-color);
+    }
+    
+    .fc-col-header-cell-cushion, .fc-daygrid-day-number {
+        color: var(--text-primary) !important;
+        text-decoration: none;
+    }
+    
+    .fc-event {
+        cursor: pointer;
+        border-radius: 4px;
+        padding: 2px 4px;
+        font-size: 0.85em;
+        transition: transform 0.1s ease;
+    }
+    
+    .fc-event:hover {
+        transform: scale(1.02);
+    }
+
+    /* Offcanvas Side Modal */
+    .offcanvas {
+        position: fixed;
+        top: 0;
+        right: -400px;
+        width: 400px;
+        height: 100vh;
+        background-color: var(--bg-surface);
+        box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+        transition: right 0.3s ease;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+    }
+    .offcanvas.open {
+        right: 0;
+    }
+    .offcanvas-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .offcanvas-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: var(--text-primary);
+    }
+    .offcanvas-close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+    .offcanvas-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 20px;
+        margin-top: 20px;
+        border-left: 2px solid var(--border-color);
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -27px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--accent-blue);
+    }
+    .timeline-content {
+        background-color: var(--input-bg);
+        border: 1px solid var(--border-color);
+        padding: 10px;
+        border-radius: var(--border-radius-base);
+    }
+    .timeline-time {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 5px;
+    }
+    .timeline-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 5px 0;
+    }
+    .timeline-desc {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    /* Modal Form Styles */
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+        width: 100%;
+        padding: 8px 12px;
+        background-color: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-base);
+        color: var(--text-primary);
+    }
+    .input-group {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-create-inline {
+        background-color: var(--accent-blue);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-base);
+        padding: 0 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Backdrop */
+    .offcanvas-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 9900;
+        display: none;
+    }
+    .offcanvas-backdrop.open {
+        display: block;
+    }
+</style>
+
+<div class="header-actions" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="color: var(--text-primary); margin: 0;">Calendário Global</h1>
+        <p style="color: var(--text-secondary); margin: 5px 0 0 0;">Gestão de eventos e feriados integrados.</p>
+    </div>
+    <button class="btn-create" onclick="openEventForm()">+ Novo Evento</button>
+</div>
+
+<div id="calendar-container">
+    <div id="calendar"></div>
+</div>
+
+<!-- Offcanvas Sidebar -->
+<div class="offcanvas-backdrop" id="offcanvas-backdrop" onclick="closeOffcanvas()"></div>
+<div class="offcanvas" id="offcanvas">
+    <div class="offcanvas-header">
+        <h2 id="offcanvas-title">Eventos do Dia</h2>
+        <button class="offcanvas-close" onclick="closeOffcanvas()">&times;</button>
+    </div>
+    <div class="offcanvas-body" id="offcanvas-body">
+        
+        <div id="day-events-view">
+            <div style="margin-bottom: 20px;">
+                <button class="btn-create" onclick="showEventForm()" style="width: 100%;">+ Adicionar Evento Neste Dia</button>
+            </div>
+            <div class="timeline" id="events-timeline">
+                <!-- Timeline items injected here -->
+            </div>
+        </div>
+
+        <div id="event-form-view" style="display: none;">
+            <button onclick="showDayView()" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; margin-bottom: 15px;">← Voltar para lista</button>
+            
+            <form id="createEventForm" onsubmit="submitEvent(event)">
+                {% csrf_token %}
+                <input type="hidden" id="event-date" name="date">
+                
+                <div class="form-group">
+                    <label>Título do Evento *</label>
+                    <input type="text" id="event-title" name="title" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Evento *</label>
+                    <div class="input-group">
+                        <select id="event-type" name="event_type" required>
+                            <option value="">Selecione...</option>
+                            {% for et in event_types %}
+                            <option value="{{ et.id }}">{{ et.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn-create-inline" onclick="toggleNewTypeForm()" title="Criar Novo Tipo">+</button>
+                    </div>
+                </div>
+                
+                <!-- Inline New Type Form -->
+                <div id="new-type-form" style="display: none; background: var(--table-header-bg); padding: 15px; border-radius: var(--border-radius-base); margin-bottom: 15px; border: 1px dashed var(--border-color);">
+                    <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; display: block; color: var(--text-secondary);">Nome</label>
+                            <input type="text" id="new-type-name" style="margin-bottom: 0; padding: 8px;">
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 2px;">
+                            <input type="color" id="new-type-color" class="circular-color-btn" value="#3B82F6" title="Cor do Evento">
+                        </div>
+                    </div>
+                    <button type="button" class="btn-create" style="width: 100%; padding: 8px; font-size: 0.9rem;" onclick="saveNewType()">Salvar Tipo</button>
+                </div>
+
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Hora Início</label>
+                        <input type="time" id="event-start-time" name="start_time">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Hora Fim</label>
+                        <input type="time" id="event-end-time" name="end_time">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="event-desc" name="description" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn-create" style="width: 100%; margin-top: 10px;" id="btn-save-event">Salvar Evento</button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let calendar;
+    let selectedDateStr = '';
+    let currentEventsOnDay = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializa o Flatpickr para seleção de horário elegante
+        flatpickr("#event-start-time", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            locale: "pt",
+            placeholder: "00:00"
+        });
+        
+        flatpickr("#event-end-time", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true,
+            locale: "pt",
+            placeholder: "00:00"
+        });
+
+        var calendarEl = document.getElementById('calendar');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialDate = urlParams.get('date');
+        
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            initialDate: initialDate || new Date(),
+            locale: 'pt-br',
+            events: '/api/events/',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: '' // Removidos os botões de Semana e Dia
+
+            },
+            eventContent: function(arg) {
+                let timeStr = arg.timeText || '';
+                if (timeStr) {
+                    // Convert '08' to '08h', '08:30' to '08h30'
+                    timeStr = timeStr.includes(':') ? timeStr.replace(':', 'h') : timeStr + 'h';
+                }
+                
+                let titleHtml = `<div class="fc-event-title" style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${arg.event.title}</div>`;
+                let timeHtml = timeStr ? `<div class="fc-event-time" style="font-weight: 400; margin-right: 4px; opacity: 0.8;">${timeStr}</div>` : '';
+                
+                let isHoliday = arg.event.extendedProps && arg.event.extendedProps.is_holiday;
+                let color = arg.event.backgroundColor || '#2563EB';
+                
+                if (isHoliday) {
+                    return { html: `<div class="fc-event-main-frame" style="display: flex; align-items: center;"><div class="fc-event-title" style="font-weight: 600;">⭐ ${arg.event.title}</div></div>` };
+                }
+                
+                let dotHtml = `<div class="fc-daygrid-event-dot" style="border-color: ${color}; margin-right: 4px;"></div>`;
+                
+                return { html: `<div class="fc-event-main-frame" style="display: flex; align-items: center; width: 100%;">${dotHtml}${timeHtml}${titleHtml}</div>` };
+            },
+            eventDidMount: function(info) {
+
+                // Força a cor do texto para usar a variável do tema (Escuro no claro, Claro no escuro)
+                info.el.style.setProperty('--fc-event-text-color', 'var(--text-primary)');
+                info.el.style.color = 'var(--text-primary)';
+
+                const mainEl = info.el.querySelector('.fc-event-main');
+                if (mainEl) {
+                    mainEl.style.color = 'var(--text-primary)';
+                }
+
+                if(info.event.backgroundColor && !info.event.extendedProps.is_holiday) {
+                    // Adiciona transparência ao fundo para que o texto dinâmico seja sempre legível (Estilo Google Calendar)
+                    info.el.style.backgroundColor = info.event.backgroundColor + '33'; // 20% alpha
+                    info.el.style.borderColor = info.event.backgroundColor;
+                }
+
+                if(info.event.extendedProps.is_holiday) {
+                    // Estilo de Feriado
+                    info.el.style.backgroundColor = 'transparent';
+                    info.el.style.border = '1px solid ' + info.event.backgroundColor;
+                    const content = info.el.querySelector('.fc-event-title');
+                    if(content) {
+                        content.innerHTML = '⭐ ' + content.innerHTML;
+                    }
+                }
+            },
+            dateClick: function(info) {
+                selectedDateStr = info.dateStr;
+                openDayView(info.dateStr, info.date);
+            },
+            eventClick: function(info) {
+                selectedDateStr = info.event.startStr.split('T')[0];
+                openDayView(selectedDateStr, info.event.start);
+            }
+        });
+        calendar.render();
+    });
+
+    function openOffcanvas() {
+        document.getElementById('offcanvas').classList.add('open');
+        document.getElementById('offcanvas-backdrop').classList.add('open');
+    }
+
+    function closeOffcanvas() {
+        document.getElementById('offcanvas').classList.remove('open');
+        document.getElementById('offcanvas-backdrop').classList.remove('open');
+    }
+
+    function openDayView(dateStr, dateObj) {
+        // Format date title
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        let formattedDate = dateObj.toLocaleDateString('pt-BR', options);
+        document.getElementById('offcanvas-title').innerText = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+        
+        document.getElementById('event-date').value = dateStr;
+        showDayView();
+
+        // Fetch events for this day to build timeline
+        const eventsList = calendar.getEvents().filter(e => {
+            const eDate = e.startStr.split('T')[0];
+            return eDate === dateStr;
+        });
+
+        const timeline = document.getElementById('events-timeline');
+        if(eventsList.length === 0) {
+            timeline.innerHTML = '<p style="color: var(--text-secondary); margin-left: -20px;">Nenhum evento registrado para este dia.</p>';
+        } else {
+            // Sort by time
+            eventsList.sort((a,b) => {
+                if(!a.startStr.includes('T')) return -1;
+                if(!b.startStr.includes('T')) return 1;
+                return a.startStr.localeCompare(b.startStr);
+            });
+
+            timeline.innerHTML = eventsList.map(e => {
+                const isHoliday = e.extendedProps.is_holiday;
+                const typeName = e.extendedProps.type_name || '';
+                const timeStr = e.startStr.includes('T') ? e.startStr.split('T')[1].substring(0,5) : 'Dia Inteiro';
+                const endTimeStr = (e.endStr && e.endStr.includes('T')) ? ' - ' + e.endStr.split('T')[1].substring(0,5) : '';
+                
+                return `
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background-color: ${e.backgroundColor};"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-time" style="color: ${e.backgroundColor};">${timeStr}${endTimeStr}</div>
+                        <h4 class="timeline-title">
+                            ${isHoliday ? '⭐ ' : ''}${e.title}
+                            <span style="display:inline-block; margin-left:8px; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:normal; background-color:${isHoliday ? '#475569' : e.backgroundColor}; color:#fff;">
+                                ${isHoliday ? `[${typeName}]` : typeName}
+                            </span>
+                        </h4>
+                        ${e.extendedProps.description ? `<p class="timeline-desc">${e.extendedProps.description}</p>` : ''}
+                        ${!isHoliday ? `<button type="button" style="margin-top:8px; font-size:11px; padding:4px 8px; cursor:pointer;" class="btn-create" onclick="alert('Edição de eventos em breve')">Editar Evento</button>` : ''}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        openOffcanvas();
+    }
+
+    function showEventForm() {
+        document.getElementById('day-events-view').style.display = 'none';
+        document.getElementById('event-form-view').style.display = 'block';
+    }
+
+    function showDayView() {
+        document.getElementById('event-form-view').style.display = 'none';
+        document.getElementById('day-events-view').style.display = 'block';
+    }
+
+    function openEventForm() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('event-date').value = today;
+        document.getElementById('offcanvas-title').innerText = "Novo Evento";
+        showEventForm();
+        openOffcanvas();
+    }
+
+    function toggleNewTypeForm() {
+        const form = document.getElementById('new-type-form');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function saveNewType() {
+        const name = document.getElementById('new-type-name').value;
+        const color = document.getElementById('new-type-color').value;
+        const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        if(!name) {
+            alert('Por favor, informe o nome do tipo.');
+            return;
+        }
+
+        fetch('/api/events/types/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrf
+            },
+            body: new URLSearchParams({
+                'name': name,
+                'color': color
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) {
+                // Add to select
+                const select = document.getElementById('event-type');
+                const opt = document.createElement('option');
+                opt.value = data.id;
+                opt.innerText = data.name;
+                opt.selected = true;
+                select.appendChild(opt);
+                
+                // Hide form
+                toggleNewTypeForm();
+                document.getElementById('new-type-name').value = '';
+            } else {
+                alert(data.error);
+            }
+        });
+    }
+
+    function submitEvent(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-save-event');
+        btn.innerText = 'Salvando...';
+        btn.disabled = true;
+
+        const formData = new FormData(document.getElementById('createEventForm'));
+
+        fetch('/api/events/create/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) {
+                calendar.refetchEvents();
+                document.getElementById('createEventForm').reset();
+                showDayView();
+                // We re-trigger date click to reload timeline
+                const dateObj = new Date(formData.get('date') + "T00:00:00");
+                openDayView(formData.get('date'), dateObj);
+            } else {
+                alert(data.error);
+            }
+        })
+        .finally(() => {
+            btn.innerText = 'Salvar Evento';
+            btn.disabled = false;
+        });
+    }
+</script>
+{% endblock %}

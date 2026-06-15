@@ -172,3 +172,24 @@ class FavoriteArticle(models.Model):
 
     def __str__(self):
         return f"{self.user.username} favoritou {self.article.title}"
+
+class EventType(models.Model):
+    name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default='#2563EB')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='event_types', null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+class Event(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+    event_type = models.ForeignKey(EventType, on_delete=models.CASCADE, related_name='events')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_events')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='events', null=True, blank=True)
+
+    def __str__(self):
+        return self.title

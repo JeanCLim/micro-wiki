@@ -27,20 +27,20 @@
     <script>
         const GLOBAL_THEMES = {
             'light': {
-                'ENTERPRISE': '--bg-main: #E0E7FF; --bg-surface: #FFFFFF; --bg-header: rgba(224, 231, 255, 0.9); --bg-sidebar: rgba(243, 244, 246, 0.9); --text-primary: #1E3A8A; --accent-blue: #2563EB; --accent-blue-hover: #1D4ED8; --border-color: #BFDBFE; --input-bg: #FFFFFF; --table-header-bg: #DBEAFE; --table-border: #BFDBFE; --text-secondary: #3B82F6; --bg-footer: #C7D2FE; --timeline-color: #2563EB;',
-                'SLATE': '--bg-main: #E2E8F0; --bg-surface: #F8FAFC; --bg-header: rgba(226, 232, 240, 0.9); --bg-sidebar: rgba(241, 245, 249, 0.9); --text-primary: #0F172A; --accent-blue: #475569; --accent-blue-hover: #334155; --border-color: #CBD5E1; --input-bg: #FFFFFF; --table-header-bg: #F1F5F9; --table-border: #CBD5E1; --text-secondary: #64748B; --bg-footer: #CBD5E1; --timeline-color: #475569;',
-                'NORDIC': '--bg-main: #DDE5E2; --bg-surface: #F4F6F5; --bg-header: rgba(221, 229, 226, 0.9); --bg-sidebar: rgba(235, 240, 238, 0.9); --text-primary: #1B2B24; --accent-blue: #5C7A6D; --accent-blue-hover: #4A6358; --border-color: #C2D1CB; --input-bg: #FFFFFF; --table-header-bg: #E8EDE9; --table-border: #C2D1CB; --text-secondary: #5C7A6D; --bg-footer: #C2D1CB; --timeline-color: #5C7A6D;',
-                'SNOW': '--bg-main: #F4F4F5; --bg-surface: #FFFFFF; --bg-header: rgba(244, 244, 245, 0.9); --bg-sidebar: rgba(250, 250, 250, 0.9); --text-primary: #18181B; --accent-blue: #FFFFFF; --accent-blue-hover: #E4E4E7; --border-color: #D4D4D4; --input-bg: #FFFFFF; --table-header-bg: #E4E4E7; --table-border: #D4D4D4; --text-secondary: #52525B; --bg-footer: #E4E4E7; --timeline-color: #52525B; --link-color: #3F3F46;',
-                'PEARL': '--bg-main: #F5EFEB; --bg-surface: #FDFCFB; --bg-header: rgba(245, 239, 235, 0.9); --bg-sidebar: rgba(250, 248, 245, 0.9); --text-primary: #4A3F35; --accent-blue: #FFFFFF; --accent-blue-hover: #EAE3DC; --border-color: #E3D8C8; --input-bg: #FFFFFF; --table-header-bg: #EAE3DC; --table-border: #E3D8C8; --text-secondary: #8C7B6B; --bg-footer: #E3D8C8; --timeline-color: #8C7B6B; --link-color: #5E504A;',
-                'SILVER': '--bg-main: #D1D5DB; --bg-surface: #F3F4F6; --bg-header: rgba(209, 213, 219, 0.9); --bg-sidebar: rgba(229, 231, 235, 0.9); --text-primary: #111827; --accent-blue: #FFFFFF; --accent-blue-hover: #E5E7EB; --border-color: #9CA3AF; --input-bg: #FFFFFF; --table-header-bg: #E5E7EB; --table-border: #9CA3AF; --text-secondary: #4B5563; --bg-footer: #9CA3AF; --timeline-color: #4B5563; --link-color: #374151;'
+                'ENTERPRISE': '--bg-main: #F1F5F9; --bg-surface: #FFFFFF; --bg-header: rgba(255, 255, 255, 0.95); --bg-sidebar: rgba(255, 255, 255, 0.95); --text-primary: #334155; --accent-blue: #3B82F6; --accent-blue-hover: #2563EB; --border-color: #E2E8F0; --input-bg: #FFFFFF; --table-header-bg: #F8FAFC; --table-border: #E2E8F0; --text-secondary: #64748B; --bg-footer: #F1F5F9; --timeline-color: #3B82F6;',
+                'SLATE': '--bg-main: #F1F5F9; --bg-surface: #FFFFFF; --bg-header: rgba(255, 255, 255, 0.95); --bg-sidebar: rgba(255, 255, 255, 0.95); --text-primary: #334155; --accent-blue: #64748B; --accent-blue-hover: #475569; --border-color: #E2E8F0; --input-bg: #FFFFFF; --table-header-bg: #F8FAFC; --table-border: #E2E8F0; --text-secondary: #64748B; --bg-footer: #F1F5F9; --timeline-color: #64748B;',
+                'NORDIC': '--bg-main: #F0F4F4; --bg-surface: #FFFFFF; --bg-header: rgba(255, 255, 255, 0.95); --bg-sidebar: rgba(255, 255, 255, 0.95); --text-primary: #334155; --accent-blue: #5C7A6D; --accent-blue-hover: #4A6358; --border-color: #E2E8F0; --input-bg: #FFFFFF; --table-header-bg: #F8FAFC; --table-border: #E2E8F0; --text-secondary: #64748B; --bg-footer: #F0F4F4; --timeline-color: #5C7A6D;',
+                'SNOW': '--bg-main: #FAFAFA; --bg-surface: #FFFFFF; --bg-header: rgba(255, 255, 255, 0.95); --bg-sidebar: rgba(255, 255, 255, 0.95); --text-primary: #3F3F46; --accent-blue: #71717A; --accent-blue-hover: #52525B; --border-color: #E4E4E7; --input-bg: #FFFFFF; --table-header-bg: #F4F4F5; --table-border: #E4E4E7; --text-secondary: #71717A; --bg-footer: #F4F4F5; --timeline-color: #71717A; --link-color: #52525B;',
+                'PEARL': '--bg-main: #FDFBF7; --bg-surface: #FFFFFF; --bg-header: rgba(255, 255, 255, 0.95); --bg-sidebar: rgba(255, 255, 255, 0.95); --text-primary: #57534E; --accent-blue: #A8A29E; --accent-blue-hover: #78716C; --border-color: #E7E5E4; --input-bg: #FFFFFF; --table-header-bg: #F5F5F4; --table-border: #E7E5E4; --text-secondary: #78716C; --bg-footer: #F5F5F4; --timeline-color: #A8A29E; --link-color: #78716C;',
+                'SILVER': '--bg-main: #F3F4F6; --bg-surface: #FFFFFF; --bg-header: rgba(255, 255, 255, 0.95); --bg-sidebar: rgba(255, 255, 255, 0.95); --text-primary: #374151; --accent-blue: #9CA3AF; --accent-blue-hover: #6B7280; --border-color: #E5E7EB; --input-bg: #FFFFFF; --table-header-bg: #F9FAFB; --table-border: #E5E7EB; --text-secondary: #6B7280; --bg-footer: #F3F4F6; --timeline-color: #9CA3AF; --link-color: #6B7280;'
             },
             'dark': {
-                'ENTERPRISE': '--bg-main: #0B1120; --bg-surface: #1E293B; --bg-header: rgba(11, 17, 32, 0.9); --bg-sidebar: rgba(15, 23, 42, 0.9); --text-primary: #F8FAFC; --accent-blue: #2563EB; --accent-blue-hover: #3B82F6; --border-color: #1E293B; --input-bg: #0F172A; --table-header-bg: #1E293B; --table-border: #1E293B; --text-secondary: #94A3B8; --bg-footer: #020617; --timeline-color: #2563EB;',
-                'SLATE': '--bg-main: #09090B; --bg-surface: #18181B; --bg-header: rgba(9, 9, 11, 0.9); --bg-sidebar: rgba(24, 24, 27, 0.9); --text-primary: #FAFAFA; --accent-blue: #3F3F46; --accent-blue-hover: #525252; --border-color: #27272A; --input-bg: #09090B; --table-header-bg: #27272A; --table-border: #27272A; --text-secondary: #A1A1AA; --bg-footer: #000000; --timeline-color: #3F3F46;',
-                'NORDIC': '--bg-main: #131A17; --bg-surface: #1F2C27; --bg-header: rgba(19, 26, 23, 0.9); --bg-sidebar: rgba(26, 36, 33, 0.9); --text-primary: #E8F0EC; --accent-blue: #405C50; --accent-blue-hover: #527566; --border-color: #2A3B34; --input-bg: #131A17; --table-header-bg: #2A3B34; --table-border: #2A3B34; --text-secondary: #9EB5A9; --bg-footer: #0B0F0E; --timeline-color: #405C50;',
-                'SNOW': '--bg-main: #000000; --bg-surface: #18181B; --bg-header: rgba(0, 0, 0, 0.9); --bg-sidebar: rgba(24, 24, 27, 0.9); --text-primary: #FFFFFF; --accent-blue: #27272A; --accent-blue-hover: #3F3F46; --border-color: #3F3F46; --input-bg: #09090B; --table-header-bg: #27272A; --table-border: #3F3F46; --text-secondary: #A1A1AA; --bg-footer: #000000; --timeline-color: #52525B; --link-color: #A1A1AA;',
-                'PEARL': '--bg-main: #1A1614; --bg-surface: #2E2724; --bg-header: rgba(26, 22, 20, 0.9); --bg-sidebar: rgba(46, 39, 36, 0.9); --text-primary: #F5EFEB; --accent-blue: #3D332F; --accent-blue-hover: #4A3F3A; --border-color: #4A3F3A; --input-bg: #1A1614; --table-header-bg: #3D332F; --table-border: #4A3F3A; --text-secondary: #A89B92; --bg-footer: #120F0E; --timeline-color: #5E504A; --link-color: #A89B92;',
-                'SILVER': '--bg-main: #111827; --bg-surface: #1F2937; --bg-header: rgba(17, 24, 39, 0.9); --bg-sidebar: rgba(31, 41, 55, 0.9); --text-primary: #F9FAFB; --accent-blue: #374151; --accent-blue-hover: #4B5563; --border-color: #4B5563; --input-bg: #111827; --table-header-bg: #374151; --table-border: #4B5563; --text-secondary: #9CA3AF; --bg-footer: #030712; --timeline-color: #6B7280; --link-color: #9CA3AF;'
+                'ENTERPRISE': '--bg-main: #0F172A; --bg-surface: #1E293B; --bg-header: rgba(30, 41, 59, 0.95); --bg-sidebar: rgba(30, 41, 59, 0.95); --text-primary: #E2E8F0; --accent-blue: #3B82F6; --accent-blue-hover: #60A5FA; --border-color: #334155; --input-bg: #0F172A; --table-header-bg: #1E293B; --table-border: #334155; --text-secondary: #94A3B8; --bg-footer: #0F172A; --timeline-color: #3B82F6;',
+                'SLATE': '--bg-main: #18181B; --bg-surface: #27272A; --bg-header: rgba(39, 39, 42, 0.95); --bg-sidebar: rgba(39, 39, 42, 0.95); --text-primary: #E4E4E7; --accent-blue: #71717A; --accent-blue-hover: #A1A1AA; --border-color: #3F3F46; --input-bg: #18181B; --table-header-bg: #27272A; --table-border: #3F3F46; --text-secondary: #A1A1AA; --bg-footer: #18181B; --timeline-color: #71717A;',
+                'NORDIC': '--bg-main: #1C2421; --bg-surface: #26312D; --bg-header: rgba(38, 49, 45, 0.95); --bg-sidebar: rgba(38, 49, 45, 0.95); --text-primary: #E8F0EC; --accent-blue: #5C7A6D; --accent-blue-hover: #7A9B8D; --border-color: #36453F; --input-bg: #1C2421; --table-header-bg: #26312D; --table-border: #36453F; --text-secondary: #9EB5A9; --bg-footer: #1C2421; --timeline-color: #5C7A6D;',
+                'SNOW': '--bg-main: #18181B; --bg-surface: #27272A; --bg-header: rgba(39, 39, 42, 0.95); --bg-sidebar: rgba(39, 39, 42, 0.95); --text-primary: #E4E4E7; --accent-blue: #71717A; --accent-blue-hover: #A1A1AA; --border-color: #3F3F46; --input-bg: #18181B; --table-header-bg: #27272A; --table-border: #3F3F46; --text-secondary: #A1A1AA; --bg-footer: #18181B; --timeline-color: #71717A; --link-color: #A1A1AA;',
+                'PEARL': '--bg-main: #2E2724; --bg-surface: #3D332F; --bg-header: rgba(61, 51, 47, 0.95); --bg-sidebar: rgba(61, 51, 47, 0.95); --text-primary: #EAE3DC; --accent-blue: #8C7B6B; --accent-blue-hover: #A89B92; --border-color: #4A3F3A; --input-bg: #2E2724; --table-header-bg: #3D332F; --table-border: #4A3F3A; --text-secondary: #A89B92; --bg-footer: #2E2724; --timeline-color: #8C7B6B; --link-color: #A89B92;',
+                'SILVER': '--bg-main: #1F2937; --bg-surface: #374151; --bg-header: rgba(55, 65, 81, 0.95); --bg-sidebar: rgba(55, 65, 81, 0.95); --text-primary: #E5E7EB; --accent-blue: #6B7280; --accent-blue-hover: #9CA3AF; --border-color: #4B5563; --input-bg: #1F2937; --table-header-bg: #374151; --table-border: #4B5563; --text-secondary: #9CA3AF; --bg-footer: #1F2937; --timeline-color: #6B7280; --link-color: #9CA3AF;'
             }
         };
 
@@ -98,6 +98,27 @@
                 <button id="theme-toggle" onclick="toggleTheme()" style="background: none; border: none; cursor: pointer; color: var(--text-primary); margin-right: 15px; display: flex; align-items: center;"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></button>
 
                 {% if not request.user.role == 'SUPERADMIN' or request.user.company %}
+
+                <div class="notification-dropdown" style="margin-right: 10px;">
+                    <button class="notification-btn" id="cal-btn" onclick="toggleMiniCalendar(event)">
+                        <span class="icon">📅</span>
+                        <span class="badge" id="cal-badge" style="display:none; background-color: #EF4444;">!</span>
+                    </button>
+                    <div class="notif-content" id="mini-cal-dropdown" style="display:none; width: 320px; padding: 15px;">
+                        <div id="mini-calendar-container"></div>
+                        <div id="mini-cal-events-popup" style="display: none; flex-direction: column;">
+                            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                                <button onclick="hideMiniCalEvents(event)" style="background: none; border: none; cursor: pointer; color: var(--text-primary); font-size: 1.2rem; margin-right: 10px;">⬅</button>
+                                <strong id="mini-cal-events-title" style="color: var(--text-primary); font-size: 1.1rem;"></strong>
+                            </div>
+                            <div id="mini-cal-events-list" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;"></div>
+                        </div>
+                        <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px; text-align: center;">
+                            <a href="{% url 'calendar' %}" class="btn-create" style="width: 100%; display: block; text-align: center;">Ir para o Calendário Maior</a>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="notification-dropdown">
                     <button class="notification-btn" id="notif-btn" onclick="toggleNotifications(event)">
                         <span class="icon"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg></span>
@@ -105,8 +126,8 @@
                     </button>
                     <div class="notif-content" id="notif-content">
                         <div class="notif-tabs">
-                            <button class="notif-tab active" onclick="switchNotifTab('approvals')">Aprovações</button>
-                            <button class="notif-tab" onclick="switchNotifTab('systems')">Sistema</button>
+                            <button class="notif-tab active" id="tab-approvals" onclick="switchNotifTab('approvals')">Aprovações</button>
+                            <button class="notif-tab" id="tab-systems" onclick="switchNotifTab('systems')">Sistema</button>
                         </div>
                         <div class="notif-pane active" id="pane-approvals">
                             Carregando...
@@ -204,9 +225,21 @@
             const content = document.getElementById('notif-content');
             const isBlock = content.style.display === 'block';
             content.style.display = isBlock ? 'none' : 'block';
+            
             if(!isBlock) {
                 fetchNotifications();
+                
+                // Marca as notificações como vistas (esconde o badge)
+                const badge = document.getElementById('notif-badge');
+                if(badge) badge.style.display = 'none';
+                
+                // Salva a contagem atual no localStorage para não mostrar o badge de novo até chegar algo novo
+                const appMatch = document.getElementById('tab-approvals').innerText.match(/\d+/);
+                const sysMatch = document.getElementById('tab-systems').innerText.match(/\d+/);
+                const count = (appMatch ? parseInt(appMatch[0]) : 0) + (sysMatch ? parseInt(sysMatch[0]) : 0);
+                localStorage.setItem('last_seen_notif_count', count);
             }
+            
             // Close profile if open
             const prof = document.getElementById('profile-dropdown-content');
             if(prof) prof.classList.remove('show');
@@ -214,14 +247,16 @@
 
 
         function switchNotifTab(tab) {
-            document.querySelectorAll('.notif-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.notif-pane').forEach(p => p.style.display = 'none');
+            document.getElementById('tab-approvals').classList.remove('active');
+            document.getElementById('tab-systems').classList.remove('active');
+            document.getElementById('pane-approvals').style.display = 'none';
+            document.getElementById('pane-systems').style.display = 'none';
             
             if (tab === 'approvals') {
-                document.querySelectorAll('.notif-tab')[0].classList.add('active');
+                document.getElementById('tab-approvals').classList.add('active');
                 document.getElementById('pane-approvals').style.display = 'block';
             } else {
-                document.querySelectorAll('.notif-tab')[1].classList.add('active');
+                document.getElementById('tab-systems').classList.add('active');
                 document.getElementById('pane-systems').style.display = 'block';
             }
         }
@@ -231,14 +266,22 @@
                 .then(r => r.json())
                 .then(data => {
                     const count = data.approvals.length;
+                    const sysCount = data.systems.length;
                     const badge = document.getElementById('notif-badge');
-                    if(count > 0) {
-                        badge.style.display = 'inline-block';
-                        badge.innerText = count;
+                    
+                    document.getElementById('tab-approvals').innerText = `APROVAÇÕES (${count})`;
+                    document.getElementById('tab-systems').innerText = `SISTEMA (${sysCount})`;
+                    
+                    const totalCount = count + sysCount;
+                    const lastSeenCount = parseInt(localStorage.getItem('last_seen_notif_count') || '0');
+                    
+                    if(totalCount > 0 && totalCount > lastSeenCount) {
+                        badge.style.display = 'flex';
+                        badge.innerText = totalCount;
                     } else {
                         badge.style.display = 'none';
                     }
-
+                    
                     const appPane = document.getElementById('pane-approvals');
                     if(data.approvals.length > 0) {
                         appPane.innerHTML = data.approvals.map(a => 
@@ -255,7 +298,7 @@
                     if(data.systems.length > 0) {
                         sysPane.innerHTML = data.systems.map(s => 
                             `<div class="notif-item">
-                                <strong>Update ${s.version}: ${s.title}</strong>
+                                <strong>${s.version ? 'Update ' + s.version + ': ' : ''}${s.title}</strong>
                                 <p>${s.message}</p>
                                 <small>${s.date}</small>
                             </div>`
@@ -289,6 +332,7 @@
         // Fetch initially
         document.addEventListener('DOMContentLoaded', () => {
             fetchNotifications();
+            fetchTodayEventsBadge();
             // Set initial icon
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const sunIcon = `<svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`;
@@ -309,7 +353,211 @@
                 if (notif && notif.style.display === 'block') {
                     notif.style.display = 'none';
                 }
+                const miniCal = document.getElementById('mini-cal-dropdown');
+                if (miniCal && miniCal.style.display === 'block') {
+                    miniCal.style.display = 'none';
+                }
             }
+        }
+
+        let currentMiniCalDate = new Date();
+        let currentMiniCalEvents = {};
+        
+        function renderMiniCalendar() {
+            const container = document.getElementById('mini-calendar-container');
+            if(!container) return;
+            
+            const year = currentMiniCalDate.getFullYear();
+            const month = currentMiniCalDate.getMonth();
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            
+            let html = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <button onclick="changeMiniCalMonth(-1, event)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--text-primary); font-weight:bold;">&lt;</button>
+                    <strong style="color:var(--text-primary); font-size:1.1rem;">${monthNames[month]} ${year}</strong>
+                    <button onclick="changeMiniCalMonth(1, event)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--text-primary); font-weight:bold;">&gt;</button>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem; color: var(--text-secondary);">
+                    <div>D</div><div>S</div><div>T</div><div>Q</div><div>Q</div><div>S</div><div>S</div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center;">
+            `;
+            
+            for(let i=0; i<firstDay.getDay(); i++) {
+                html += `<div></div>`;
+            }
+            
+            for(let d=1; d<=lastDay.getDate(); d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                
+                // Highlight today
+                const isToday = (d === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear());
+                const bgStyle = isToday ? 'background-color: var(--accent-blue); color: white;' : '';
+                
+                html += `
+                    <div style="position: relative; padding: 8px 5px; border-radius: 6px; cursor: pointer; color: var(--text-primary); ${bgStyle}" 
+                         class="mini-cal-day" 
+                         onclick="showMiniCalEvents('${dateStr}', event)"
+                         onmouseover="if(!this.style.backgroundColor) this.style.backgroundColor='var(--bg-main)'" 
+                         onmouseout="if(this.style.backgroundColor==='var(--bg-main)') this.style.backgroundColor='transparent'">
+                        ${d}
+                        <span id="mini-badge-${dateStr}" style="display:none; position: absolute; top: -5px; right: -5px; background-color: #EF4444; color: white; border-radius: 50%; font-size: 11px; width: 18px; height: 18px; line-height: 18px; text-align: center; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span>
+                    </div>
+                `;
+            }
+            
+            html += `</div>`;
+            container.innerHTML = html;
+            
+            // Fetch events for this month
+            const startStr = `${year}-${String(month+1).padStart(2,'0')}-01T00:00:00Z`;
+            const endMonth = month === 11 ? 1 : month + 2;
+            const endYear = month === 11 ? year + 1 : year;
+            const endStr = `${endYear}-${String(endMonth).padStart(2,'0')}-01T00:00:00Z`;
+            
+            fetch(`/api/events/?start=${startStr}&end=${endStr}`)
+                .then(r => r.json())
+                .then(events => {
+                    currentMiniCalEvents = {};
+                    events.forEach(e => {
+                        const date = e.start.split('T')[0];
+                        if(!currentMiniCalEvents[date]) currentMiniCalEvents[date] = [];
+                        currentMiniCalEvents[date].push(e);
+                    });
+                    
+                    for(let date in currentMiniCalEvents) {
+                        const badge = document.getElementById(`mini-badge-${date}`);
+                        if(badge) {
+                            const dayEvents = currentMiniCalEvents[date];
+                            badge.style.display = 'block';
+                            badge.innerText = dayEvents.length;
+                            
+                            // Discover if there is a single uniform color (excluding holidays if we want, but they have their own color)
+                            let colors = new Set();
+                            let hasStandardEvents = false;
+                            dayEvents.forEach(e => {
+                                if(!e.extendedProps || !e.extendedProps.is_holiday) {
+                                    colors.add(e.color);
+                                    hasStandardEvents = true;
+                                }
+                            });
+                            
+                            if (hasStandardEvents && colors.size === 1) {
+                                badge.style.backgroundColor = Array.from(colors)[0];
+                            } else {
+                                badge.style.backgroundColor = '#EF4444'; // default red
+                            }
+                        }
+                    }
+                });
+        }
+        
+        function showMiniCalEvents(dateStr, e) {
+            if(e) e.stopPropagation();
+            const events = currentMiniCalEvents[dateStr] || [];
+            
+            const popup = document.getElementById('mini-cal-events-popup');
+            const list = document.getElementById('mini-cal-events-list');
+            const title = document.getElementById('mini-cal-events-title');
+            
+            const parts = dateStr.split('-');
+            title.innerText = `Dia ${parts[2]}/${parts[1]}/${parts[0]}`;
+            
+            if (events.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 20px;">Nenhum evento neste dia.</p>';
+            } else {
+                list.innerHTML = events.map(ev => {
+                    const color = ev.color || '#2563EB';
+                    return `
+                    <div style="padding: 10px; border: 1px solid var(--border-color); border-left: 4px solid ${color}; border-radius: 6px; margin-bottom: 8px; background: var(--bg-main);">
+                        <strong style="color: ${color}; display: block; font-size: 0.9rem;">${ev.title}</strong>
+                        ${ev.description ? `<p style="color: var(--text-secondary); font-size: 0.8rem; margin: 4px 0 0 0; opacity: 0.8;">${ev.description}</p>` : ''}
+                    </div>
+                `}).join('');
+            }
+            
+            document.getElementById('mini-calendar-container').style.display = 'none';
+            popup.style.display = 'flex';
+        }
+        
+        function hideMiniCalEvents(e) {
+            if(e) e.stopPropagation();
+            document.getElementById('mini-cal-events-popup').style.display = 'none';
+            document.getElementById('mini-calendar-container').style.display = 'block';
+        }
+        
+        function changeMiniCalMonth(delta, e) {
+            if(e) e.stopPropagation();
+            currentMiniCalDate.setMonth(currentMiniCalDate.getMonth() + delta);
+            renderMiniCalendar();
+        }
+        
+        function toggleMiniCalendar(e) {
+            if(e) e.stopPropagation();
+            const content = document.getElementById('mini-cal-dropdown');
+            const isBlock = content.style.display === 'block';
+            content.style.display = isBlock ? 'none' : 'block';
+            
+            if(!isBlock) {
+                hideMiniCalEvents(e);
+                renderMiniCalendar();
+            }
+            
+            // Close others
+            const notif = document.getElementById('notif-content');
+            if(notif) notif.style.display = 'none';
+            const prof = document.getElementById('profile-dropdown-content');
+            if(prof) prof.classList.remove('show');
+        }
+
+        function fetchTodayEventsBadge() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            
+            const startStr = `${dateStr}T00:00:00Z`;
+            
+            const nextDay = new Date(today);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const nextYear = nextDay.getFullYear();
+            const nextMonth = String(nextDay.getMonth() + 1).padStart(2, '0');
+            const nextD = String(nextDay.getDate()).padStart(2, '0');
+            const endStr = `${nextYear}-${nextMonth}-${nextD}T00:00:00Z`;
+            
+            fetch(`/api/events/?start=${startStr}&end=${endStr}`)
+                .then(r => r.json())
+                .then(events => {
+                    // Filter specifically for exactly today since API could return overlapping events
+                    const todaysEvents = events.filter(e => e.start.startsWith(dateStr));
+                    if (todaysEvents.length > 0) {
+                        const badge = document.getElementById('cal-badge');
+                        if (badge) {
+                            badge.style.display = 'flex';
+                            badge.innerText = '!';
+                            
+                            let colors = new Set();
+                            let hasStandardEvents = false;
+                            todaysEvents.forEach(e => {
+                                if(!e.extendedProps || !e.extendedProps.is_holiday) {
+                                    colors.add(e.color);
+                                    hasStandardEvents = true;
+                                }
+                            });
+                            
+                            if (hasStandardEvents && colors.size === 1) {
+                                badge.style.backgroundColor = Array.from(colors)[0];
+                            } else {
+                                badge.style.backgroundColor = '#EF4444'; // default red
+                            }
+                        }
+                    }
+                });
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/js/shepherd.min.js"></script>

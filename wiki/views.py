@@ -625,3 +625,126 @@ class TemplateDataAPIView(LoginRequiredMixin, View):
             'default_tags': t.default_tags,
             'default_visibility': t.default_visibility
         })
+
+import datetime
+from django.utils import timezone
+from .services import HolidayService
+
+class FullCalendarView(LoginRequiredMixin, View):
+    def get(self, request):
+        from .models import EventType
+        company = request.user.company
+        if company:
+            event_types = EventType.objects.filter(company=company)
+        else:
+            event_types = EventType.objects.filter(company__isnull=True)
+        return render(request, 'calendar.html', {'event_types': event_types})
+
+class EventsAPIView(LoginRequiredMixin, View):
+    def get(self, request):
+        from .models import Event
+        start = request.GET.get('start')
+        end = request.GET.get('end')
+        
+        company = request.user.company
+        qs = Event.objects.all()
+        if company:
+            qs = qs.filter(company=company)
+        else:
+            qs = qs.filter(company__isnull=True)
+            
+        if start:
+            qs = qs.filter(date__gte=start[:10])
+        if end:
+            qs = qs.filter(date__lte=end[:10])
+            
+        events_data = []
+        for e in qs:
+            start_str = f"{e.date.isoformat()}T{e.start_time.isoformat()}" if e.start_time else e.date.isoformat()
+            end_str = f"{e.date.isoformat()}T{e.end_time.isoformat()}" if e.end_time else e.date.isoformat()
+            events_data.append({
+                'id': f"evt_{e.id}",
+                'title': e.title,
+                'start': start_str,
+                'end': end_str,
+                'color': e.event_type.color if e.event_type else '#2563EB',
+                'description': e.description,
+                'extendedProps': {
+                    'is_holiday': False,
+                    'type_name': e.event_type.name if e.event_type else ''
+                }
+            })
+            
+        # Holidays
+        try:
+            start_date = datetime.datetime.fromisoformat(start[:10]).date() if start else timezone.now().date().replace(month=1, day=1)
+            end_date = datetime.datetime.fromisoformat(end[:10]).date() if end else timezone.now().date().replace(month=12, day=31)
+            years = list(range(start_date.year, end_date.year + 1))
+            for y in years:
+                holiday_list = HolidayService.get_petrolina_holidays(y)
+                for h in holiday_list:
+                    h_date = datetime.datetime.fromisoformat(h['date']).date()
+                    if start_date <= h_date <= end_date:
+                        events_data.append({
+                            'id': f"hol_{h['date']}",
+                            'title': h['name'],
+                            'start': h['date'],
+                            'color': '#475569', # Slate 600
+                            'allDay': True,
+                            'extendedProps': {
+                                'is_holiday': True,
+                                'description': f"Feriado {h['type']}",
+                                'type_name': f"Feriado {h['type']}"
+                            }
+                        })
+        except Exception:
+            pass
+            
+        return JsonResponse(events_data, safe=False)
+
+class EventCreateAPIView(LoginRequiredMixin, View):
+    def post(self, request):
+        from .models import Event, EventType
+        title = request.POST.get('title')
+        description = request.POST.get('description', '')
+        date_str = request.POST.get('date')
+        start_time_str = request.POST.get('start_time')
+        end_time_str = request.POST.get('end_time')
+        event_type_id = request.POST.get('event_type')
+        
+        company = request.user.company
+        
+        if not title or not date_str or not event_type_id:
+            return JsonResponse({'success': False, 'error': 'Preencha os campos obrigatórios.'}, status=400)
+            
+        try:
+            event_type = EventType.objects.get(id=event_type_id)
+            if event_type.company != company:
+                return JsonResponse({'success': False, 'error': 'Tipo de evento inválido.'}, status=400)
+                
+            e = Event.objects.create(
+                title=title,
+                description=description,
+                date=date_str,
+                start_time=start_time_str if start_time_str else None,
+                end_time=end_time_str if end_time_str else None,
+                event_type=event_type,
+                created_by=request.user,
+                company=company
+            )
+            return JsonResponse({'success': True, 'id': e.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+class EventTypeCreateAPIView(LoginRequiredMixin, View):
+    def post(self, request):
+        from .models import EventType
+        name = request.POST.get('name')
+        color = request.POST.get('color', '#2563EB')
+        company = request.user.company
+        
+        if not name:
+            return JsonResponse({'success': False, 'error': 'Nome é obrigatório.'}, status=400)
+            
+        et = EventType.objects.create(name=name, color=color, company=company)
+        return JsonResponse({'success': True, 'id': et.id, 'name': et.name, 'color': et.color})

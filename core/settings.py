@@ -87,3 +87,23 @@ AUTH_USER_MODEL = 'wiki.CustomUser'
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/'
+
+# Configuração de Cache (Alta Performance)
+# Usa Redis se REDIS_URL estiver definido, caso contrário usa Memória Local (Fallback)
+if os.environ.get('REDIS_URL'):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.environ.get('REDIS_URL'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        }
+    }
