@@ -4,15 +4,18 @@ from .views import (
     CustomLoginView, CustomLogoutView, GatewayView,
     ArticleFrontendCreateView, ArticleReviewView, NotificationsAPIView,
     CategoryCreateAPIView, UserProfileView, SettingsView, UserCreateAPIView, ArticleFrontendUpdateView,
-    MasterAdminView, FavoriteToggleAPIView, ToggleDarkModeAPIView, TemplateDataAPIView,
-    FullCalendarView, EventsAPIView, EventCreateAPIView, EventTypeCreateAPIView
+    FavoriteToggleAPIView, ToggleDarkModeAPIView, TemplateDataAPIView,
+    FullCalendarView, EventsAPIView, EventCreateAPIView, EventTypeCreateAPIView,
+    MasterLoginView, MasterDashboardView, ToggleCompanyStatusView
 )
 
 urlpatterns = [
     path('acesso/', GatewayView.as_view(), name='gateway'),
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', CustomLogoutView.as_view(), name='logout'),
-    path('master-admin/', MasterAdminView.as_view(), name='master_admin'),
+    path('master-control-panel/', MasterDashboardView.as_view(), name='master_dashboard'),
+    path('master-control-panel/login/', MasterLoginView.as_view(), name='master_login'),
+    path('master-control-panel/api/toggle-company/<int:company_id>/', ToggleCompanyStatusView.as_view(), name='toggle_company_status'),
     path('perfil/', UserProfileView.as_view(), name='profile'),
     path('configuracoes/', SettingsView.as_view(), name='settings'),
     path('artigos/novo/', ArticleFrontendCreateView.as_view(), name='article_create'),

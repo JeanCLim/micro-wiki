@@ -108,7 +108,9 @@ class Article(models.Model):
     title = models.CharField(max_length=200, db_index=True)
     slug = models.SlugField(unique=True, db_index=True)
     cover_image = models.ImageField(upload_to='articles/covers/', null=True, blank=True)
+    cover_image_size = models.PositiveIntegerField(default=0)
     attachment = models.FileField(upload_to='articles/attachments/', null=True, blank=True)
+    attachment_size = models.PositiveIntegerField(default=0)
     content = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='articles')
     tags = models.ManyToManyField(Tag, blank=True, related_name='articles')
@@ -131,6 +133,25 @@ class Article(models.Model):
 
     def get_absolute_url(self):
         return reverse('article_detail', args=[self.slug])
+
+    def save(self, *args, **kwargs):
+        if self.cover_image:
+            try:
+                self.cover_image_size = self.cover_image.size
+            except Exception:
+                pass
+        else:
+            self.cover_image_size = 0
+            
+        if self.attachment:
+            try:
+                self.attachment_size = self.attachment.size
+            except Exception:
+                pass
+        else:
+            self.attachment_size = 0
+            
+        super().save(*args, **kwargs)
 
 class ArticleTemplate(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='article_templates', null=True, blank=True)

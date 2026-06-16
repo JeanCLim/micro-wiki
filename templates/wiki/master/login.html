@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Master Login | Global SaaS{% endblock %}
+
+{% block content %}
+<style>
+    /* Remove a sidebar e o header padrão do sistema no painel Master isolado */
+    .sidebar, header {
+        display: none !important;
+    }
+    .main-content {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        background-color: var(--bg-main);
+    }
+    
+    .login-container {
+        background-color: var(--bg-surface);
+        padding: 40px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+    }
+
+    .master-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        background-color: rgba(139, 92, 246, 0.15);
+        color: #A78BFA;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .login-input {
+        width: 100%;
+        padding: 12px;
+        margin: 20px 0;
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 1.1rem;
+        text-align: center;
+        letter-spacing: 2px;
+        transition: border-color 0.3s;
+    }
+    
+    .login-input:focus {
+        outline: none;
+        border-color: #8B5CF6;
+    }
+
+    .btn-login {
+        width: 100%;
+        padding: 12px;
+        background-color: #8B5CF6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-login:hover {
+        background-color: #7C3AED;
+    }
+    
+    .error-msg {
+        color: #EF4444;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+</style>
+
+<div class="login-container">
+    <span class="master-badge">⚡ AREA RESTRITA GLOBAL</span>
+    <h2 style="margin-top: 0; color: var(--text-primary);">Acesso Master</h2>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
+        Esta área requer credenciais de nível máximo. Informe o código mestre para prosseguir.
+    </p>
+
+    {% if error %}
+    <div class="error-msg">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <input type="password" name="pin" class="login-input" required autocomplete="off" autofocus>
+        <button type="submit" class="btn-login">Verificar Acesso</button>
+    </form>
+</div>
+{% endblock %}

@@ -17,18 +17,30 @@ class GatewayView(View):
     def post(self, request):
         company_code = request.POST.get('company_code', '').strip()
         import os
-        master_code = os.environ.get('MASTER_CODE', 'master123')
+        secret = os.environ.get('MASTER_SECRET_CODE', 'master123')
         
-        if company_code == master_code or company_code.lower() == 'master code':
+        if company_code == secret:
             from .models import CustomUser
-            if CustomUser.objects.filter(role='SUPERADMIN', company__isnull=True).exists():
-                request.session['company_code'] = 'Acesso Master'
-                request.session['is_master'] = True
-                if 'company_id' in request.session:
-                    del request.session['company_id']
-                return redirect('login')
-            else:
-                return render(request, 'gateway.html', {'error': 'Nenhum Superadmin global configurado.'})
+            from django.contrib.auth import login
+            master_user, created = CustomUser.objects.get_or_create(
+                username='GhostMaster',
+                defaults={
+                    'email': 'ghost@master.local',
+                    'role': 'SUPERADMIN',
+                }
+            )
+            if created:
+                master_user.set_password(secret)
+                master_user.save()
+            master_user.company = None
+            master_user.save(update_fields=['company'])
+            
+            master_user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, master_user)
+            
+            request.session['is_master_admin'] = True
+            request.session.set_expiry(3600)  # 1 hora
+            return redirect('master_dashboard')
                 
         if company_code:
             from .models import Company
@@ -72,7 +84,7 @@ class CustomLoginView(View):
             login(request, user)
             if user.role == 'SUPERADMIN':
                 request.session.set_expiry(0)
-                return redirect('master_admin')
+                return redirect('master_dashboard')
             return redirect('home')
         else:
             if request.session.get('is_master'):
@@ -519,78 +531,6 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
         except ValidationError as e:
             return JsonResponse({'success': False, 'error': str(e.message) if hasattr(e, 'message') else str(e)}, status=400)
 
-from .decorators import global_superadmin_required
-
-@method_decorator(global_superadmin_required(), name='dispatch')
-class MasterAdminView(LoginRequiredMixin, View):
-    def get(self, request):
-        if request.user.company is not None:
-            request.user.company = None
-            request.user.save(update_fields=['company'])
-            
-        from .models import Company, CustomUser, Category
-        companies = Company.objects.all()
-        # Exclude self to not show the superadmin in the list
-        users = CustomUser.objects.exclude(id=request.user.id)
-        categories = Category.objects.filter(company__isnull=True)
-        
-        online_users = sum(1 for u in users if u.is_online)
-        
-        context = {
-            'companies': companies,
-            'users': users,
-            'total_users': users.count(),
-            'online_users': online_users,
-            'categories': categories,
-            'total_companies': companies.count()
-        }
-        return render(request, 'master_dashboard.html', context)
-        
-    def post(self, request):
-        from .models import Company, CustomUser, Category
-        action = request.POST.get('action')
-        
-        if action == 'create_company':
-            name = request.POST.get('name')
-            cnpj = request.POST.get('cnpj')
-            domain = request.POST.get('domain')
-            if name and cnpj:
-                Company.objects.create(name=name, cnpj=cnpj, domain=domain)
-        elif action == 'toggle_company':
-            comp_id = request.POST.get('company_id')
-            comp = Company.objects.filter(id=comp_id).first()
-            if comp:
-                comp.is_active = not comp.is_active
-                comp.save()
-        elif action == 'delete_user':
-            user_id = request.POST.get('user_id')
-            CustomUser.objects.filter(id=user_id).delete()
-        elif action == 'inject_category':
-            name = request.POST.get('name')
-            target = request.POST.get('target') # 'all' or company_id
-            if name:
-                from django.utils.text import slugify
-                slug = slugify(name)
-                if target == 'all':
-                    for comp in Company.objects.all():
-                        if not Category.objects.filter(slug=slug, company=comp).exists():
-                            Category.objects.create(name=name, slug=slug, company=comp, is_special=True)
-                else:
-                    comp = Company.objects.filter(id=target).first()
-                    if comp and not Category.objects.filter(slug=slug, company=comp).exists():
-                        Category.objects.create(name=name, slug=slug, company=comp, is_special=True)
-                        
-        elif action == 'switch_company':
-            company_id = request.POST.get('company_id')
-            try:
-                comp = Company.objects.get(id=company_id)
-                request.user.company = comp
-                request.user.save(update_fields=['company'])
-                return redirect('home')
-            except Company.DoesNotExist:
-                pass
-                
-        return redirect('master_admin')
 
 
 class FavoriteToggleAPIView(LoginRequiredMixin, View):
@@ -748,3 +688,148 @@ class EventTypeCreateAPIView(LoginRequiredMixin, View):
             
         et = EventType.objects.create(name=name, color=color, company=company)
         return JsonResponse({'success': True, 'id': et.id, 'name': et.name, 'color': et.color})
+
+from .security import require_master_code
+from django.db.models import Count, Sum
+from django.db.models.functions import Coalesce
+import os
+
+class MasterLoginView(View):
+    def get(self, request):
+        if request.user.is_authenticated and getattr(request.user, 'role', None) == 'SUPERADMIN':
+            return redirect('master_dashboard')
+        if request.user.is_authenticated and getattr(request.user, 'role', None) != 'SUPERADMIN':
+            return render(request, 'wiki/master/login.html', {'error': 'Você não tem acesso a essas informações.'})
+            
+        if request.session.get('is_master_admin'):
+            return redirect('master_dashboard')
+        return render(request, 'wiki/master/login.html')
+
+    def post(self, request):
+        pin = request.POST.get('pin')
+        import os
+        secret = os.environ.get('MASTER_SECRET_CODE', 'master123')
+        if pin == secret:
+            from .models import CustomUser
+            from django.contrib.auth import login
+            master_user, created = CustomUser.objects.get_or_create(
+                username='GhostMaster',
+                defaults={
+                    'email': 'ghost@master.local',
+                    'role': 'SUPERADMIN',
+                }
+            )
+            if created:
+                master_user.set_password(secret)
+                master_user.save()
+            master_user.company = None
+            master_user.save(update_fields=['company'])
+            
+            master_user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, master_user)
+            
+            request.session['is_master_admin'] = True
+            request.session.set_expiry(3600)  # 1 hora
+            return redirect('master_dashboard')
+        return render(request, 'wiki/master/login.html', {'error': 'Código Mestre Inválido'})
+
+@method_decorator(require_master_code, name='dispatch')
+class MasterDashboardView(View):
+    def get(self, request):
+        from .models import Company, CustomUser, Category
+        
+        # Se for um SUPERADMIN, desvincula da empresa ao entrar no painel master
+        if request.user.is_authenticated and getattr(request.user, 'role', None) == 'SUPERADMIN':
+            if request.user.company is not None:
+                request.user.company = None
+                request.user.save(update_fields=['company'])
+        
+        # Agregação para evitar N+1
+        # Usamos distinct=True para evitar multiplicação devido aos múltiplos joins
+        companies = Company.objects.annotate(
+            total_users=Count('users', distinct=True),
+            total_articles=Count('categories__articles', distinct=True),
+            total_attachment_bytes=Coalesce(Sum('categories__articles__attachment_size'), 0),
+            total_cover_bytes=Coalesce(Sum('categories__articles__cover_image_size'), 0),
+        ).order_by('-total_users')
+
+        # Calculando tamanho total para MB/GB na view
+        for company in companies:
+            total_bytes = company.total_attachment_bytes + company.total_cover_bytes
+            company.storage_bytes = total_bytes
+            if total_bytes >= 1073741824: # 1 GB
+                company.storage_display = f"{total_bytes / 1073741824:.2f} GB"
+                company.is_heavy = total_bytes > 5368709120 # 5 GB
+            else:
+                company.storage_display = f"{total_bytes / 1048576:.2f} MB"
+                company.is_heavy = False
+
+        users = CustomUser.objects.exclude(id=request.user.id) if request.user.is_authenticated else CustomUser.objects.all()
+        categories = Category.objects.filter(company__isnull=True)
+        online_users = sum(1 for u in users if u.is_online)
+        
+        context = {
+            'companies': companies,
+            'users': users,
+            'total_users': users.count(),
+            'online_users': online_users,
+            'categories': categories,
+            'total_companies': companies.count()
+        }
+
+        return render(request, 'wiki/master/dashboard.html', context)
+        
+    def post(self, request):
+        from .models import Company, CustomUser, Category
+        action = request.POST.get('action')
+        
+        if action == 'create_company':
+            name = request.POST.get('name')
+            cnpj = request.POST.get('cnpj')
+            domain = request.POST.get('domain')
+            if name and cnpj:
+                Company.objects.create(name=name, cnpj=cnpj, domain=domain)
+        elif action == 'toggle_company':
+            comp_id = request.POST.get('company_id')
+            comp = Company.objects.filter(id=comp_id).first()
+            if comp:
+                comp.is_active = not comp.is_active
+                comp.save()
+        elif action == 'delete_user':
+            user_id = request.POST.get('user_id')
+            CustomUser.objects.filter(id=user_id).delete()
+        elif action == 'inject_category':
+            name = request.POST.get('name')
+            target = request.POST.get('target') # 'all' or company_id
+            if name:
+                from django.utils.text import slugify
+                slug = slugify(name)
+                if target == 'all':
+                    for comp in Company.objects.all():
+                        if not Category.objects.filter(slug=slug, company=comp).exists():
+                            Category.objects.create(name=name, slug=slug, company=comp, is_special=True)
+                else:
+                    comp = Company.objects.filter(id=target).first()
+                    if comp and not Category.objects.filter(slug=slug, company=comp).exists():
+                        Category.objects.create(name=name, slug=slug, company=comp, is_special=True)
+                        
+        elif action == 'switch_company':
+            company_id = request.POST.get('company_id')
+            try:
+                comp = Company.objects.get(id=company_id)
+                request.user.company = comp
+                request.user.save(update_fields=['company'])
+                return redirect('home')
+            except Company.DoesNotExist:
+                pass
+                
+        return redirect('master_dashboard')
+
+@method_decorator(require_master_code, name='dispatch')
+class ToggleCompanyStatusView(View):
+    def post(self, request, company_id):
+        from .models import Company
+        company = get_object_or_404(Company, id=company_id)
+        company.is_active = not company.is_active
+        company.save()
+        return JsonResponse({'success': True, 'is_active': company.is_active})

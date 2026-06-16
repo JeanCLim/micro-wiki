@@ -25,7 +25,7 @@ class GlobalSuperadminIsolationMiddleware:
     def __call__(self, request):
         if request.user.is_authenticated and request.user.role == 'SUPERADMIN' and request.user.company is None:
             # Prevent accessing knowledge base routes
-            allowed_prefixes = ['/master-admin/', '/logout/', '/static/', '/api/', '/admin/']
+            allowed_prefixes = ['/master-control-panel/', '/logout/', '/static/', '/api/', '/admin/']
             if not any(request.path.startswith(p) for p in allowed_prefixes):
-                return redirect('master_admin')
+                return redirect('master_dashboard')
         return self.get_response(request)

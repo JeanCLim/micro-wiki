@@ -8,8 +8,8 @@
         --accent-blue: #8B5CF6 !important; /* Roxo Neon / Purple Accent */
     }
     
-    /* Remove a sidebar padrão do sistema no painel Master */
-    .sidebar {
+    /* Remove a sidebar e o header padrão do sistema no painel Master isolado */
+    .sidebar, header {
         display: none !important;
     }
     .main-content {
@@ -54,6 +54,50 @@
         letter-spacing: 1px;
         font-size: 0.85rem;
     }
+
+    /* Toggle Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 46px;
+        height: 24px;
+        vertical-align: middle;
+        margin-right: 10px;
+    }
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input:checked + .slider {
+        background-color: #10B981;
+    }
+    input:checked + .slider:before {
+        transform: translateX(22px);
+    }
 </style>
 
 <div class="header" style="margin-bottom: 2rem;">
@@ -74,7 +118,7 @@
         
         <div style="margin-top: 30px;">
             <hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 15px;">
-            <a href="{% url 'logout' %}" class="logout-minimalist" style="display: block; width: 100%; text-align: left; padding: 8px 10px; color: var(--text-secondary); font-weight: 500; text-decoration: none; transition: color 0.2s;">🚪 Sair do Sistema</a>
+            <a href="{% url 'logout' %}" class="logout-minimalist" style="display: block; width: 100%; text-align: left; padding: 8px 10px; color: var(--text-secondary); font-weight: 500; text-decoration: none; transition: color 0.2s;">🚪 Sair do Painel</a>
         </div>
     </div>
 
@@ -111,9 +155,10 @@
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead>
                         <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Empresa</th>
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">CNPJ / Domínio</th>
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Membros</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Empresa / Domínio</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Usuários</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Artigos</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Armazenamento</th>
                             <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Status Acesso</th>
                             <th style="padding: 12px; font-weight: 500; color: var(--text-secondary); text-align: right;">Ação</th>
                         </tr>
@@ -121,15 +166,28 @@
                     <tbody>
                         {% for comp in companies %}
                         <tr style="border-bottom: 1px solid var(--table-border);">
-                            <td style="padding: 12px; font-weight: 500;">{{ comp.name }}</td>
-                            <td style="padding: 12px; color: var(--text-secondary);">{{ comp.cnpj }} <br> <span style="font-size: 0.8rem; color: #64748B;">{{ comp.domain }}</span></td>
-                            <td style="padding: 12px;">{{ comp.users.count }}</td>
+                            <td style="padding: 12px; font-weight: 500;">
+                                {{ comp.name }}
+                                <br> <span style="font-size: 0.8rem; color: #64748B;">CNPJ: {{ comp.cnpj }} | DOM: {{ comp.domain }}</span>
+                            </td>
+                            <td style="padding: 12px;">{{ comp.total_users|default:comp.users.count }}</td>
+                            <td style="padding: 12px;">{{ comp.total_articles|default:"0" }}</td>
                             <td style="padding: 12px;">
-                                {% if comp.is_active %}
-                                <span style="color: #10B981; font-weight: 500; font-size: 0.85rem;">Ativo</span>
+                                {% if comp.is_heavy %}
+                                    <span style="color: #EF4444; font-weight: bold;">{{ comp.storage_display }}</span><br>
+                                    <small style="color: #EF4444;">Alto Consumo</small>
                                 {% else %}
-                                <span style="color: #EF4444; font-weight: 500; font-size: 0.85rem;">Suspenso</span>
+                                    <span style="color: #10B981; font-weight: 500;">{{ comp.storage_display|default:"0.00 MB" }}</span>
                                 {% endif %}
+                            </td>
+                            <td style="padding: 12px;">
+                                <label class="switch">
+                                    <input type="checkbox" onchange="toggleCompany({{ comp.id }}, this)" {% if comp.is_active %}checked{% endif %}>
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="status-text" id="status-text-{{ comp.id }}" style="font-size: 0.85rem; font-weight: 600; color: {% if comp.is_active %}#10B981{% else %}#EF4444{% endif %};">
+                                    {% if comp.is_active %}Ativo{% else %}Suspenso{% endif %}
+                                </span>
                             </td>
                             <td style="padding: 12px; text-align: right;">
                                 <div style="display: flex; gap: 5px; justify-content: flex-end;">
@@ -141,19 +199,11 @@
                                             Acessar Base
                                         </button>
                                     </form>
-                                    <form method="POST" style="margin: 0;">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="toggle_company">
-                                        <input type="hidden" name="company_id" value="{{ comp.id }}">
-                                        <button type="submit" class="btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; border-color: var(--text-secondary); color: var(--text-primary);">
-                                            {% if comp.is_active %}Suspender{% else %}Reativar{% endif %}
-                                        </button>
-                                    </form>
                                 </div>
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="5" style="padding: 15px; color: var(--text-secondary); text-align: center;">Nenhuma empresa cadastrada.</td></tr>
+                        <tr><td colspan="6" style="padding: 15px; color: var(--text-secondary); text-align: center;">Nenhuma empresa cadastrada.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -186,7 +236,7 @@
                             </td>
                             <td style="padding: 12px;">{{ u.company.name|default:"Sem Empresa" }}</td>
                             <td style="padding: 12px;">
-                                <span style="background-color: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border-color);">{{ u.get_role_display }}</span>
+                                <span style="background-color: rgba(0,0,0,0.05); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid var(--border-color);">{{ u.get_role_display }}</span>
                             </td>
                             <td style="padding: 12px;">
                                 {% if u.is_online %}
@@ -284,7 +334,7 @@
             {% endfor %}
         </select>
         
-        <p style="font-size: 0.8rem; color: #F59E0B; margin-top: -15px; margin-bottom: 20px;">Nota: A categoria será automaticamente marcada com 🔒 (Especial) nos workspaces, blindando-a contra exclusão de usuários não-Admins.</p>
+        <p style="font-size: 0.8rem; color: #F59E0B; margin-top: -15px; margin-bottom: 20px;">Nota: A categoria será automaticamente marcada com 🔒 (Especial) nos workspaces.</p>
 
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
             <button type="button" onclick="document.getElementById('modal-category').close()" style="background: transparent; color: var(--text-secondary); border: none; cursor: pointer; padding: 8px;">Cancelar</button>
@@ -310,6 +360,57 @@ function showMasterTab(tabId) {
         btn.style.color = 'var(--accent-blue)';
         btn.style.border = '1px solid var(--accent-blue)';
     }
+}
+
+// Lógica do Toggle Switch via AJAX
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+function toggleCompany(companyId, checkbox) {
+    const statusText = document.getElementById('status-text-' + companyId);
+    statusText.innerText = "...";
+    statusText.style.color = "#F59E0B";
+    
+    fetch(`/master-control-panel/api/toggle-company/${companyId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            checkbox.checked = data.is_active;
+            statusText.innerText = data.is_active ? "Ativo" : "Suspenso";
+            statusText.style.color = data.is_active ? "#10B981" : "#EF4444";
+        } else {
+            alert("System Error.");
+            checkbox.checked = !checkbox.checked;
+            statusText.innerText = checkbox.checked ? "Ativo" : "Suspenso";
+            statusText.style.color = checkbox.checked ? "#10B981" : "#EF4444";
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("Connection failed.");
+        checkbox.checked = !checkbox.checked;
+        statusText.innerText = checkbox.checked ? "Ativo" : "Suspenso";
+        statusText.style.color = checkbox.checked ? "#10B981" : "#EF4444";
+    });
 }
 </script>
 {% endblock %}
