@@ -276,6 +276,11 @@ class ArticleFrontendCreateView(LoginRequiredMixin, View):
 class ArticleReviewView(LoginRequiredMixin, View):
     def post(self, request, slug):
         article = get_object_or_404(Article, slug=slug)
+        
+        from django.http import HttpResponseForbidden
+        if request.user.company and article.category and article.category.company != request.user.company:
+             return HttpResponseForbidden('Acesso negado: Este artigo pertence a outro Workspace.')
+             
         action = request.POST.get('action')
         
         if action == 'approve':
@@ -367,14 +372,20 @@ class UserProfileView(LoginRequiredMixin, View):
 class SettingsView(LoginRequiredMixin, View):
     def get(self, request):
         from .models import WorkspaceSettings
+        from django.db.models import Prefetch
         company = request.user.company
         settings_obj = None
         if company:
             # Exclude SUPERADMIN
-            users_qs = company.users.exclude(role='SUPERADMIN')
+            recent_articles_prefetch = Prefetch(
+                'articles',
+                queryset=Article.objects.order_by('-updated_at'),
+                to_attr='prefetched_recent_articles'
+            )
+            users_qs = company.users.exclude(role='SUPERADMIN').prefetch_related(recent_articles_prefetch)
             users = list(users_qs)
             for u in users:
-                u.recent_articles = Article.objects.filter(author=u).order_by('-updated_at')[:3]
+                u.recent_articles = u.prefetched_recent_articles[:3]
                 
             categories = Category.objects.filter(company=company)
             from .models import ArticleTemplate
@@ -480,6 +491,10 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
         if request.user.role not in ['ADMIN', 'SUPERADMIN']:
             return redirect('home')
             
+        from django.http import HttpResponseForbidden
+        if request.user.company and article.category and article.category.company != request.user.company:
+             return HttpResponseForbidden('Acesso negado: Este artigo pertence a outro Workspace.')
+             
         company = request.user.company
         if company:
             categories = Category.objects.filter(company=company)
@@ -496,6 +511,10 @@ class ArticleFrontendUpdateView(LoginRequiredMixin, View):
         if request.user.role not in ['ADMIN', 'SUPERADMIN']:
             return JsonResponse({'success': False, 'error': 'Permissão negada. Apenas administradores podem editar artigos.'}, status=403)
             
+        from django.http import HttpResponseForbidden
+        if request.user.company and article.category and article.category.company != request.user.company:
+             return JsonResponse({'success': False, 'error': 'Acesso negado: Este artigo pertence a outro Workspace.'}, status=403)
+             
         title = request.POST.get('title')
         content = request.POST.get('content')
         category_id = request.POST.get('category')

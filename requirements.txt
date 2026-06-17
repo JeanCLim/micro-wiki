@@ -13,3 +13,4 @@ sqlparse==0.5.5
 tzdata==2026.2
 requests
 django-redis==5.4.0
+bleach==6.1.0

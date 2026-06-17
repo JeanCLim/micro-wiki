@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.urls import reverse
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
+import bleach
 
 class Company(models.Model):
     name = models.CharField(max_length=100)
@@ -64,10 +67,8 @@ class CustomUser(AbstractUser):
 
     @property
     def is_online(self):
-        from django.utils import timezone
-        import datetime
         if self.last_seen:
-            return timezone.now() - self.last_seen < datetime.timedelta(minutes=5)
+            return timezone.now() - self.last_seen < timedelta(minutes=5)
         return False
 
     def __str__(self):
@@ -114,7 +115,7 @@ class Article(models.Model):
     content = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='articles')
     tags = models.ManyToManyField(Tag, blank=True, related_name='articles')
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='articles')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='articles')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='DRAFT')
     visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='PUBLIC')
     version = models.CharField(max_length=20, default="01", blank=True)
@@ -135,19 +136,24 @@ class Article(models.Model):
         return reverse('article_detail', args=[self.slug])
 
     def save(self, *args, **kwargs):
+        if self.content:
+            allowed_tags = ['b', 'i', 'u', 'em', 'strong', 'a', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'table', 'tbody', 'tr', 'td', 'img']
+            allowed_attributes = {'a': ['href', 'title'], 'img': ['src', 'alt', 'width', 'height']}
+            self.content = bleach.clean(self.content, tags=allowed_tags, attributes=allowed_attributes)
+
         if self.cover_image:
             try:
                 self.cover_image_size = self.cover_image.size
-            except Exception:
-                pass
+            except (ValueError, AttributeError):
+                self.cover_image_size = 0
         else:
             self.cover_image_size = 0
             
         if self.attachment:
             try:
                 self.attachment_size = self.attachment.size
-            except Exception:
-                pass
+            except (ValueError, AttributeError):
+                self.attachment_size = 0
         else:
             self.attachment_size = 0
             
@@ -158,7 +164,7 @@ class ArticleTemplate(models.Model):
     title = models.CharField(max_length=200)
     content_html = models.TextField(blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
-    default_tags = models.CharField(max_length=255, blank=True, help_text="Separadas por vírgula")
+    default_tags = models.ManyToManyField(Tag, blank=True, related_name='templates')
     default_visibility = models.CharField(max_length=20, choices=Article.VISIBILITY_CHOICES, default='PUBLIC')
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -167,6 +173,7 @@ class ArticleTemplate(models.Model):
 
 class ApprovalNotification(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='notifications')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

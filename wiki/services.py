@@ -20,13 +20,16 @@ class HolidayService:
         try:
             response = requests.get(f'https://brasilapi.com.br/api/feriados/v1/{year}', timeout=5)
             if response.status_code == 200:
-                national_data = response.json()
-                for item in national_data:
-                    holidays_list.append({
-                        'date': item['date'],
-                        'name': item['name'],
-                        'type': 'NACIONAL'
-                    })
+                try:
+                    national_data = response.json()
+                    for item in national_data:
+                        holidays_list.append({
+                            'date': item['date'],
+                            'name': item['name'],
+                            'type': 'NACIONAL'
+                        })
+                except ValueError:
+                    HolidayService._append_national_fallback(holidays_list, year)
             else:
                 HolidayService._append_national_fallback(holidays_list, year)
         except requests.exceptions.RequestException:

@@ -6,7 +6,7 @@ from .views import (
     CategoryCreateAPIView, UserProfileView, SettingsView, UserCreateAPIView, ArticleFrontendUpdateView,
     FavoriteToggleAPIView, ToggleDarkModeAPIView, TemplateDataAPIView,
     FullCalendarView, EventsAPIView, EventCreateAPIView, EventTypeCreateAPIView,
-    MasterLoginView, MasterDashboardView, ToggleCompanyStatusView
+    MasterLoginView, MasterDashboardView
 )
 
 urlpatterns = [
@@ -15,7 +15,6 @@ urlpatterns = [
     path('logout/', CustomLogoutView.as_view(), name='logout'),
     path('master-control-panel/', MasterDashboardView.as_view(), name='master_dashboard'),
     path('master-control-panel/login/', MasterLoginView.as_view(), name='master_login'),
-    path('master-control-panel/api/toggle-company/<int:company_id>/', ToggleCompanyStatusView.as_view(), name='toggle_company_status'),
     path('perfil/', UserProfileView.as_view(), name='profile'),
     path('configuracoes/', SettingsView.as_view(), name='settings'),
     path('artigos/novo/', ArticleFrontendCreateView.as_view(), name='article_create'),
