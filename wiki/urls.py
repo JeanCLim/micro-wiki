@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     HomeView, ArticleDetailView, CategoryDetailView, SearchView, 
-    CustomLoginView, CustomLogoutView, GatewayView,
+    CustomLoginView, CustomLogoutView, GatewayView, ExitCompanyView,
     ArticleFrontendCreateView, ArticleReviewView, NotificationsAPIView,
     CategoryCreateAPIView, UserProfileView, SettingsView, UserCreateAPIView, ArticleFrontendUpdateView,
     FavoriteToggleAPIView, ToggleDarkModeAPIView, TemplateDataAPIView,
@@ -13,6 +13,7 @@ urlpatterns = [
     path('acesso/', GatewayView.as_view(), name='gateway'),
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', CustomLogoutView.as_view(), name='logout'),
+    path('sair-empresa/', ExitCompanyView.as_view(), name='exit_company'),
     path('master-control-panel/', MasterDashboardView.as_view(), name='master_dashboard'),
     path('master-control-panel/login/', MasterLoginView.as_view(), name='master_login'),
     path('perfil/', UserProfileView.as_view(), name='profile'),

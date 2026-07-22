@@ -100,6 +100,14 @@ class HomeView(LoginRequiredMixin, ListView):
     model = Article
     template_name = 'home.html'
     context_object_name = 'articles'
+
+class ExitCompanyView(View):
+    def get(self, request):
+        if 'company_id' in request.session:
+            del request.session['company_id']
+        if 'company_code' in request.session:
+            del request.session['company_code']
+        return redirect('gateway')
     
     def get_queryset(self):
         user = self.request.user

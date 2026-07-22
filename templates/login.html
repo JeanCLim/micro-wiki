@@ -12,6 +12,10 @@
     {% include 'loader.html' %}
     <div class="login-container">
         <div class="login-header">
+            <a href="{% url 'exit_company' %}" style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: #6b7280; text-decoration: none; margin-bottom: 20px; transition: color 0.2s;" onmouseover="this.style.color='#111827';" onmouseout="this.style.color='#6b7280';">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Trocar de Empresa
+            </a>
             <div class="company-logo">
                 LOGO de: {{ request.session.company_code }}
             </div>
