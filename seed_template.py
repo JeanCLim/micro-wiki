@@ -8,15 +8,18 @@ from wiki.models import ArticleTemplate, Company
 
 company = Company.objects.first()
 
-# We need to make sure we don't duplicate it if we run it multiple times.
+# Evita duplicação do template na execução do script.
 template, created = ArticleTemplate.objects.get_or_create(
     title='Procedimento de Geração e Envio de XML',
     company=company,
     defaults={
-        'default_tags': 'xml, envio, contador, fechamento',
         'default_visibility': 'PUBLIC',
     }
 )
+
+# Define tags via TaggableManager (M2M) após salvar o objeto.
+# template.default_tags.add('xml', 'envio', 'contador', 'fechamento')
+
 
 html_content = """
 <h2>1. Verificação Inicial de Servidores (TSD)</h2>

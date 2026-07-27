@@ -101,14 +101,6 @@ class HomeView(LoginRequiredMixin, ListView):
     template_name = 'home.html'
     context_object_name = 'articles'
 
-class ExitCompanyView(View):
-    def get(self, request):
-        if 'company_id' in request.session:
-            del request.session['company_id']
-        if 'company_code' in request.session:
-            del request.session['company_code']
-        return redirect('gateway')
-    
     def get_queryset(self):
         user = self.request.user
         qs = Article.objects.filter(status='APPROVED')
@@ -133,6 +125,14 @@ class ExitCompanyView(View):
         context['favorite_articles'] = base_qs.filter(id__in=fav_ids).order_by('-created_at')
         
         return context
+
+class ExitCompanyView(View):
+    def get(self, request):
+        if 'company_id' in request.session:
+            del request.session['company_id']
+        if 'company_code' in request.session:
+            del request.session['company_code']
+        return redirect('gateway')
 
 class ArticleDetailView(LoginRequiredMixin, DetailView):
     model = Article
@@ -159,6 +159,21 @@ class ArticleDetailView(LoginRequiredMixin, DetailView):
         from .models import FavoriteArticle
         context['is_favorited'] = FavoriteArticle.objects.filter(user=self.request.user, article=self.object).exists() if self.request.user.is_authenticated else False
         return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if request.user.is_authenticated:
+            from .models import UserArticleAccess
+            access, created = UserArticleAccess.objects.get_or_create(user=request.user, article=self.object)
+            if not created:
+                access.access_count += 1
+                access.save(update_fields=['access_count', 'last_accessed'])
+            
+            self.object.views += 1
+            self.object.save(update_fields=['views'])
+            
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
 
 class CategoryDetailView(LoginRequiredMixin, ListView):
     model = Article
@@ -384,7 +399,7 @@ class SettingsView(LoginRequiredMixin, View):
         company = request.user.company
         settings_obj = None
         if company:
-            # Exclude SUPERADMIN
+            # Aplica filtro de exclusão para registros contendo o papel de SUPERADMIN.
             recent_articles_prefetch = Prefetch(
                 'articles',
                 queryset=Article.objects.order_by('-updated_at'),
@@ -439,8 +454,12 @@ class SettingsView(LoginRequiredMixin, View):
             new_role = request.POST.get('role')
             u = CustomUser.objects.filter(id=user_id, company=company).first()
             if u and u != request.user:
-                u.role = new_role
-                u.save()
+                try:
+                    u.role = new_role
+                    u.save()
+                except Exception as e:
+                    from django.contrib import messages
+                    messages.error(request, str(e))
                 
         elif action == 'update_user_info':
             user_id = request.POST.get('user_id')
@@ -465,7 +484,7 @@ class SettingsView(LoginRequiredMixin, View):
             request.user.compact_layout = request.POST.get('compact_layout') == 'on'
             request.user.save()
             
-            # Save global favicon if provided
+            # Processa o armazenamento do favicon global, caso seja enviado na requisição.
             if 'favicon' in request.FILES:
                 settings_obj, _ = WorkspaceSettings.objects.get_or_create(company=company)
                 settings_obj.favicon = request.FILES['favicon']
@@ -495,7 +514,7 @@ class UserCreateAPIView(LoginRequiredMixin, View):
 class ArticleFrontendUpdateView(LoginRequiredMixin, View):
     def get(self, request, slug):
         article = get_object_or_404(Article, slug=slug)
-        # Verify permissions: must be ADMIN or SUPERADMIN
+        # Validação explícita da obrigatoriedade do nível ADMIN ou SUPERADMIN.
         if request.user.role not in ['ADMIN', 'SUPERADMIN']:
             return redirect('home')
             
@@ -581,7 +600,7 @@ class TemplateDataAPIView(LoginRequiredMixin, View):
         from django.http import JsonResponse
         t = get_object_or_404(ArticleTemplate, id=template_id)
         
-        # Verify if template belongs to the same company
+        # Validação estrutural para garantir o pertencimento do template à respectiva empresa iterada.
         if t.company and request.user.company and t.company != request.user.company:
             return JsonResponse({'error': 'Acesso negado'}, status=403)
             
@@ -642,7 +661,7 @@ class EventsAPIView(LoginRequiredMixin, View):
                 }
             })
             
-        # Holidays
+        # Processamento do calendário e feriados.
         try:
             start_date = datetime.datetime.fromisoformat(start[:10]).date() if start else timezone.now().date().replace(month=1, day=1)
             end_date = datetime.datetime.fromisoformat(end[:10]).date() if end else timezone.now().date().replace(month=12, day=31)
@@ -765,14 +784,14 @@ class MasterDashboardView(View):
     def get(self, request):
         from .models import Company, CustomUser, Category
         
-        # Se for um SUPERADMIN, desvincula da empresa ao entrar no painel master
+        # Aplica o desvinculamento de instâncias corporativas do SUPERADMIN durante o acesso ao painel mestre.
         if request.user.is_authenticated and getattr(request.user, 'role', None) == 'SUPERADMIN':
             if request.user.company is not None:
                 request.user.company = None
                 request.user.save(update_fields=['company'])
         
-        # Agregação para evitar N+1
-        # Usamos distinct=True para evitar multiplicação devido aos múltiplos joins
+        # Refatoração de consulta ORM baseada em anotação agregada para impedir problemas de N+1 queries.
+        # Aciona a diretiva distinct=True para inibir a criação de múltiplos registros advindos de joins complexos.
         companies = Company.objects.annotate(
             total_users=Count('users', distinct=True),
             total_articles=Count('categories__articles', distinct=True),
@@ -780,7 +799,7 @@ class MasterDashboardView(View):
             total_cover_bytes=Coalesce(Sum('categories__articles__cover_image_size'), 0),
         ).order_by('-total_users')
 
-        # Calculando tamanho total para MB/GB na view
+        # Lógica de conversão do tamanho de dados total, convertendo para Megabytes ou Gigabytes diretamente na camada de visualização.
         for company in companies:
             total_bytes = company.total_attachment_bytes + company.total_cover_bytes
             company.storage_bytes = total_bytes
@@ -791,15 +810,37 @@ class MasterDashboardView(View):
                 company.storage_display = f"{total_bytes / 1048576:.2f} MB"
                 company.is_heavy = False
 
-        users = CustomUser.objects.exclude(id=request.user.id) if request.user.is_authenticated else CustomUser.objects.all()
+        # QuerySet A (Panorama Global): Static metrics
+        global_users = CustomUser.objects.exclude(role='SUPERADMIN')
+        global_total_users = global_users.count()
+        global_online_users = sum(1 for u in global_users if getattr(u, 'is_online', False))
+        
+        # QuerySet B (Listagem da Gestão Global): Filtered metrics
+        users_list = global_users
+        empresa_id = request.GET.get('empresa_id')
+        role_filter = request.GET.get('role')
+        
+        if empresa_id:
+            users_list = users_list.filter(company_id=empresa_id)
+        if role_filter:
+            users_list = users_list.filter(role=role_filter)
+            
+        # AJAX response for table update
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1':
+            from django.template.loader import render_to_string
+            from django.http import JsonResponse
+            html = render_to_string('wiki/master/partials/user_table_rows.html', {'users': users_list})
+            return JsonResponse({'html': html})
+            
         categories = Category.objects.filter(company__isnull=True)
-        online_users = sum(1 for u in users if u.is_online)
         
         context = {
+            'selected_empresa': empresa_id,
+            'selected_role': role_filter,
             'companies': companies,
-            'users': users,
-            'total_users': users.count(),
-            'online_users': online_users,
+            'users': users_list,
+            'total_users': global_total_users,
+            'online_users': global_online_users,
             'categories': categories,
             'total_companies': companies.count()
         }
@@ -825,6 +866,34 @@ class MasterDashboardView(View):
         elif action == 'delete_user':
             user_id = request.POST.get('user_id')
             CustomUser.objects.filter(id=user_id).delete()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('ajax') == '1':
+                from django.http import JsonResponse
+                return JsonResponse({'success': True})
+                
+        elif action == 'edit_user':
+            user_id = request.POST.get('user_id')
+            name = request.POST.get('name')
+            email = request.POST.get('email')
+            role = request.POST.get('role')
+            
+            try:
+                user = CustomUser.objects.get(id=user_id)
+                if name:
+                    user.first_name = name
+                if email:
+                    user.email = email
+                if role:
+                    user.role = role
+                user.save()
+                
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('ajax') == '1':
+                    from django.http import JsonResponse
+                    return JsonResponse({'success': True})
+            except Exception as e:
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('ajax') == '1':
+                    from django.http import JsonResponse
+                    return JsonResponse({'success': False, 'error': str(e)})
+                pass
         elif action == 'inject_category':
             name = request.POST.get('name')
             target = request.POST.get('target') # 'all' or company_id
@@ -860,3 +929,92 @@ class ToggleCompanyStatusView(View):
         company.is_active = not company.is_active
         company.save()
         return JsonResponse({'success': True, 'is_active': company.is_active})
+
+class UserHistoryAPIView(LoginRequiredMixin, View):
+    def get(self, request, user_id):
+        if request.user.id != user_id and request.user.role not in ['ADMIN', 'SUPERADMIN']:
+            return JsonResponse({'error': 'Unauthorized'}, status=403)
+            
+        try:
+            from .models import CustomUser, UserArticleAccess, Article
+            target_user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+            
+        from django.db.models import F
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        filter_type = request.GET.get('filter', 'all')
+        accesses = UserArticleAccess.objects.filter(user=target_user).select_related('article')
+        
+        if filter_type == 'day':
+            accesses = accesses.filter(last_accessed__date=timezone.now().date())
+        elif filter_type == 'week':
+            accesses = accesses.filter(last_accessed__gte=timezone.now() - timedelta(days=7))
+        elif filter_type == 'month':
+            accesses = accesses.filter(last_accessed__gte=timezone.now() - timedelta(days=30))
+            
+        accesses = accesses.order_by('-last_accessed')[:50]
+        
+        viewed_data = []
+        for acc in accesses:
+            viewed_data.append({
+                'title': acc.article.title,
+                'url': acc.article.get_absolute_url(),
+                'access_count': acc.access_count,
+                'last_accessed': acc.last_accessed.strftime('%d/%m/%Y %H:%M')
+            })
+            
+        pending_qs = Article.objects.filter(author=target_user).exclude(status='APPROVED').order_by('-updated_at')
+        pending_data = []
+        for art in pending_qs:
+            pending_data.append({
+                'id': art.id,
+                'title': art.title,
+                'url': art.get_absolute_url(),
+                'status': art.get_status_display(),
+                'updated_at': art.updated_at.strftime('%d/%m/%Y')
+            })
+            
+        published_qs = Article.objects.filter(author=target_user, status='APPROVED').order_by('-updated_at')
+        published_data = []
+        for art in published_qs:
+            published_data.append({
+                'id': art.id,
+                'title': art.title,
+                'url': art.get_absolute_url(),
+                'views': art.views,
+                'updated_at': art.updated_at.strftime('%d/%m/%Y')
+            })
+            
+        return JsonResponse({
+            'is_admin': request.user.role in ['ADMIN', 'SUPERADMIN'],
+            'viewed': viewed_data,
+            'created_pending': pending_data,
+            'created_published': published_data
+        })
+
+class ApproveArticleAPIView(LoginRequiredMixin, View):
+    def post(self, request, article_id):
+        if request.user.role not in ['ADMIN', 'SUPERADMIN']:
+            return JsonResponse({'error': 'Unauthorized'}, status=403)
+        try:
+            from .models import Article
+            article = Article.objects.get(id=article_id)
+            if article.status != 'APPROVED':
+                article.status = 'APPROVED'
+                article.save(update_fields=['status'])
+                return JsonResponse({'success': True})
+            return JsonResponse({'error': 'Already approved'}, status=400)
+        except Article.DoesNotExist:
+            return JsonResponse({'error': 'Not found'}, status=404)
+
+class HeartbeatAPIView(LoginRequiredMixin, View):
+    def post(self, request):
+        from django.core.cache import cache
+        # Presence Engine Stateless: Define o status online no Cache local ou Redis
+        # Expira em 12 segundos, o front-end envia heartbeat a cada 5 segundos.
+        if request.user.is_authenticated:
+            cache.set(f"presence_{request.user.pk}", True, timeout=12)
+        return JsonResponse({'status': 'ok'})

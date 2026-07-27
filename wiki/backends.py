@@ -7,7 +7,7 @@ class CustomAuthBackend(ModelBackend):
         
         company_id = request.session.get('company_id') if request else None
 
-        # Intercepta login local de superadmin da empresa (alias)
+        # Intercepta acesso via alias para superadmins locais da empresa.
         if username == 'superadmin' and company_id:
             real_username = f"superadmin_company_{company_id}"
             try:
@@ -25,7 +25,7 @@ class CustomAuthBackend(ModelBackend):
             except UserModel.DoesNotExist:
                 return None
         else:
-            # Login via email
+            # Executa a autenticação via endereço de e-mail.
             try:
                 user = UserModel.objects.get(email=username)
                 if user.check_password(password) and self.user_can_authenticate(user):

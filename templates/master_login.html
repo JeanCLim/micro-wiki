@@ -36,7 +36,7 @@
 
         <form method="POST" action="{% url 'login' %}" autocomplete="off">
             {% csrf_token %}
-            <!-- Usando login_type genérico pois Superadmins podem logar com e-mail/username padrão -->
+            <!-- Utiliza login_type genérico para suporte à autenticação de Superadmins. -->
             <input type="hidden" name="login_type" value="email">
 
             <div style="text-align: left; margin-bottom: 20px;">

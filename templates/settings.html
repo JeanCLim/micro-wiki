@@ -3,7 +3,7 @@
 
 {% block content %}
 <style>
-    /* Sidebar Interna Escura (Estilo do Print) */
+    /* Estrutura da barra lateral interna. (Estilo do Print) */
     .settings-sidebar {
         background-color: #0F172A;
         border-radius: 12px;
@@ -62,7 +62,7 @@
         background: rgba(20, 184, 166, 0.1);
     }
 
-    /* Área Principal (White Card) */
+    /* Container principal de renderização de conteúdo. */
     .settings-white-card {
         background-color: var(--bg-surface);
         border-radius: 12px;
@@ -146,7 +146,7 @@
 </style>
 
 <div style="display: grid; grid-template-columns: 250px 1fr; gap: 30px; min-height: 70vh;">
-    <!-- Sidebar Interna Escura -->
+    <!-- Estrutura da barra lateral interna. -->
     <div class="settings-sidebar">
         <div class="sidebar-logo">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -215,11 +215,11 @@
         </button>
     </div>
 
-    <!-- Área Principal (White Card) -->
+    <!-- Container principal de renderização de conteúdo. -->
     <div style="flex: 1;">
         <div class="settings-white-card">
 
-            <!-- User Profile Header -->
+            <!-- Cabeçalho com informações de perfil do usuário. -->
             <div class="user-profile-header">
                 <div class="profile-avatar-large"
                     style="background-color: {% if request.user.profile_picture %}#ffffff{% else %}var(--accent-blue){% endif %}; overflow: hidden;">
@@ -241,7 +241,7 @@
                 </div>
             </div>
 
-            <!-- Abas Dinâmicas (Panes) -->
+            <!-- Estruturas de abas para navegação dinâmica. -->
             <div id="tab-geral" class="settings-pane">
                 <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                     Geral</h2>
@@ -283,7 +283,7 @@
                 </div>
             </div>
 
-            <!-- Painel Aparência -->
+            <!-- Interface de configuração de aparência. -->
             <div id="tab-aparencia" class="settings-pane" style="display: none;">
                 <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                     Aparência & Branding</h2>
@@ -300,7 +300,7 @@
                         <div
                             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
 
-                            <!-- Favicon da Empresa (Global) -->
+                            <!-- Configuração de Favicon global aplicável à empresa. -->
                             <div
                                 style="grid-column: 1 / -1; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
                                 <h4 style="margin: 0 0 10px 0; color: var(--text-primary);">Logotipo Simplificado /
@@ -458,7 +458,7 @@
             </div>
 
 
-            <!-- Painel Templates -->
+            <!-- Interface de gerenciamento de templates de artigo. -->
             <div id="tab-templates" class="settings-pane" style="display: none;">
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 25px;">
@@ -525,7 +525,7 @@
                     aqui aparecerão como opção na tela de criação de novos artigos.</p>
             </div>
 
-            <!-- Painel Segurança -->
+            <!-- Interface de parametrização de configurações de segurança. -->
             <div id="tab-security" class="settings-pane" style="display: none;">
                 <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                     Segurança e Log</h2>
@@ -606,7 +606,7 @@
                 </div>
             </div>
 
-            <!-- Painel Usuários -->
+            <!-- Interface de administração de credenciais de usuários. -->
             <div id="tab-usuarios" class="settings-pane" style="display: none;">
                 <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                     Usuários & Equipe</h2>
@@ -664,7 +664,7 @@
                                         <input type="hidden" name="user_id" value="{{ u.id }}">
                                         <select name="role"
                                             style="padding: 5px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                                            <option value="COMMON" {% if u.role == 'COMMON' %}selected{% endif %}>Leitor
+                                            <option value="COMMON" {% if u.role == 'COMMON' %}selected{% endif %}>Usuário Comum (Leitor)
                                             </option>
                                             <option value="EMPLOYEE" {% if u.role == 'EMPLOYEE' %}selected{% endif %}>
                                                 Autor</option>
@@ -685,20 +685,8 @@
                                     {% endif %}
                                 </td>
                                 <td style="padding: 15px; text-align: right;">
-                                    <button onclick="toggleActivity('activity-{{ u.id }}')"
+                                    <button type="button" onclick="openHistoryModal('{{ u.id }}', '{{ u.username }}')"
                                         style="background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Histórico</button>
-                                </td>
-                            </tr>
-                            <tr id="activity-{{ u.id }}" style="display: none; background-color: rgba(0,0,0,0.02);">
-                                <td colspan="4"
-                                    style="padding: 15px; font-size: 0.85rem; color: var(--text-secondary);">
-                                    <strong>Artigos Recentes:</strong><br>
-                                    {% for a in u.recent_articles %}
-                                    - <a href="{{ a.get_absolute_url }}" style="color: var(--accent-blue);">{{ a.title
-                                        }}</a> ({{ a.updated_at|date:"d/m/Y" }})<br>
-                                    {% empty %}
-                                    Nenhum artigo publicado.
-                                    {% endfor %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -707,7 +695,7 @@
                 </div>
             </div>
 
-            <!-- Painel Categorias -->
+            <!-- Interface de organização das categorias do sistema. -->
             <div id="tab-categorias" class="settings-pane" style="display: none;">
                 <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                     Categorias</h2>
@@ -755,7 +743,7 @@
                 </div>
             </div>
 
-            <!-- Painel Tutoriais -->
+            <!-- Interface com instruções e tutoriais da plataforma. -->
             <div id="tab-tutoriais" class="settings-pane" style="display: none;">
                 <h2 style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                     Ajuda & Tutoriais</h2>
@@ -792,7 +780,7 @@
         </div>
     </div>
 
-    <!-- Modal Convidar Usuário -->
+    <!-- Janela modal para convite de novas credenciais. -->
     <dialog id="modal-user"
         style="margin: auto; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 350px;">
         <h3 style="margin-top: 0; margin-bottom: 15px;">Convidar Usuário</h3>
@@ -809,7 +797,7 @@
 
         <select id="new-user-role"
             style="width: 100%; padding: 8px; margin-bottom: 20px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-            <option value="COMMON">Usuário Comum (Leitor)</option>
+            <option value="COMMON">Usuário Comum (Usuário Comum (Leitor))</option>
             <option value="EMPLOYEE">Funcionário (Autor)</option>
             <option value="ADMIN">Administrador</option>
         </select>
@@ -823,7 +811,7 @@
         </div>
     </dialog>
 
-    <!-- Modal Editar Usuário -->
+    <!-- Janela modal para atualização e edição de usuários existentes. -->
     <dialog id="modal-edit-user"
         style="margin: auto; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 350px;">
         <h3 style="margin-top: 0; margin-bottom: 15px;">Editar Usuário</h3>
@@ -1013,6 +1001,154 @@
                     }
                 });
             }
+        // History Modal Logic
+        let currentHistoryUserId = null;
+        let currentHistoryUserName = null;
+
+        function openHistoryModal(userId, username) {
+            currentHistoryUserId = userId;
+            currentHistoryUserName = username;
+            document.getElementById('historyUserName').innerText = username;
+            document.getElementById('historyModal').style.display = 'flex';
+            
+            // Reset filter
+            document.getElementById('historyFilter').value = 'all';
+            
+            fetchHistory(userId, 'all');
+        }
+
+        function fetchHistory(userId, filterStr) {
+            document.getElementById('historyViewedList').innerHTML = '<p style="padding:10px;">Carregando...</p>';
+            document.getElementById('historyCreatedList').innerHTML = '<p style="padding:10px;">Carregando...</p>';
+            
+            fetch(`/api/users/${userId}/history/?filter=${filterStr}`)
+                .then(res => res.json())
+                .then(data => {
+                    let viewedHtml = data.viewed.length ? '' : '<p style="padding:10px;">Nenhum artigo visualizado neste período.</p>';
+                    data.viewed.forEach(a => {
+                        viewedHtml += `<div style="padding: 15px 10px; border-bottom: 1px solid var(--border-color);">
+                            <a href="${a.url}" target="_blank" style="color: var(--accent-blue); font-weight: bold; text-decoration: none; font-size: 1rem;">${a.title}</a>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">
+                                <i class="fas fa-eye"></i> Acessado ${a.access_count} vezes &bull; Último acesso: ${a.last_accessed}
+                            </div>
+                        </div>`;
+                    });
+                    document.getElementById('historyViewedList').innerHTML = viewedHtml;
+                    
+                    let createdHtml = '';
+                    if (!data.created_pending.length && !data.created_published.length) {
+                        createdHtml = '<p style="padding:10px;">Nenhum artigo criado.</p>';
+                    } else {
+                        if (data.created_pending.length) {
+                            createdHtml += '<h4 style="margin: 15px 10px 5px; color: var(--text-secondary);">Pendentes ou em Rascunho</h4>';
+                            data.created_pending.forEach(a => {
+                                let approveBtn = (data.is_admin && a.status === 'Aguardando Aprovação') 
+                                    ? `<button type="button" onclick="approveArticle(${a.id})" style="background: var(--accent-blue); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; float: right;">Aprovar</button>` 
+                                    : '';
+                                createdHtml += `<div style="padding: 15px 10px; border-bottom: 1px solid var(--border-color);">
+                                    ${approveBtn}
+                                    <a href="${a.url}" target="_blank" style="color: var(--text-primary); font-weight: bold; text-decoration: none;">${a.title}</a>
+                                    <span style="font-size: 0.7rem; background: #fbbf24; color: #78350f; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">${a.status}</span>
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">Atualizado: ${a.updated_at}</div>
+                                </div>`;
+                            });
+                        }
+                        if (data.created_published.length) {
+                            createdHtml += '<h4 style="margin: 15px 10px 5px; color: var(--text-secondary);">Publicados</h4>';
+                            data.created_published.forEach(a => {
+                                createdHtml += `<div style="padding: 15px 10px; border-bottom: 1px solid var(--border-color);">
+                                    <a href="${a.url}" target="_blank" style="color: var(--text-primary); font-weight: bold; text-decoration: none;">${a.title}</a>
+                                    <span style="font-size: 0.7rem; background: #34d399; color: #064e3b; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">${a.status}</span>
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">Atualizado: ${a.updated_at} &bull; ${a.views} acessos totais no sistema</div>
+                                </div>`;
+                            });
+                        }
+                    }
+                    document.getElementById('historyCreatedList').innerHTML = createdHtml;
+                })
+                .catch(err => {
+                    document.getElementById('historyViewedList').innerHTML = '<p style="padding:10px; color:red;">Erro ao carregar histórico.</p>';
+                    document.getElementById('historyCreatedList').innerHTML = '<p style="padding:10px; color:red;">Erro ao carregar histórico.</p>';
+                });
+        }
+
+        function approveArticle(articleId) {
+            if(!confirm("Aprovar este artigo para publicação imediata?")) return;
+            fetch(`/api/articles/${articleId}/approve/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : ''
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert("Artigo aprovado com sucesso!");
+                    fetchHistory(currentHistoryUserId, document.getElementById('historyFilter').value);
+                } else {
+                    alert("Erro: " + data.error);
+                }
+            }).catch(err => alert("Erro ao aprovar artigo."));
+        }
+
+        function switchHistoryTab(tabId, event) {
+            document.querySelectorAll('.history-tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.history-tab-btn').forEach(el => {
+                el.style.borderBottom = 'none';
+                el.style.color = 'var(--text-secondary)';
+            });
+            document.getElementById(tabId).style.display = 'block';
+            if (event) {
+                event.currentTarget.style.borderBottom = '2px solid var(--accent-blue)';
+                event.currentTarget.style.color = 'var(--text-primary)';
+            }
+        }
+        
+        window.onclick = function(event) {
+            let modal = document.getElementById('historyModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        
+        window.openHistoryModal = openHistoryModal;
+        window.fetchHistory = fetchHistory;
+        window.switchHistoryTab = switchHistoryTab;
+        window.approveArticle = approveArticle;
+
         });
     </script>
+
+    <!-- Modal Histórico -->
+    <div id="historyModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; font-family: var(--font-family, inherit);">
+        <div class="modal-content" style="max-width: 650px; width: 95%; max-height: 80vh; padding: 0; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-sidebar);">
+                <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary);">Histórico: <span id="historyUserName" style="color: var(--accent-blue);"></span></h3>
+                <span class="close-modal" onclick="document.getElementById('historyModal').style.display='none'" style="cursor: pointer; font-size: 1.5rem; color: var(--text-secondary);">&times;</span>
+            </div>
+            
+            <div style="display: flex; border-bottom: 1px solid var(--border-color); background: var(--bg-sidebar);">
+                <button type="button" class="history-tab-btn" onclick="switchHistoryTab('tab-viewed', event)" style="flex: 1; padding: 15px; background: transparent; border: none; border-bottom: 2px solid var(--accent-blue); color: var(--text-primary); cursor: pointer; font-weight: bold; font-size: 1rem; font-family: inherit;">Artigos Vistos</button>
+                <button type="button" class="history-tab-btn" onclick="switchHistoryTab('tab-created', event)" style="flex: 1; padding: 15px; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-weight: bold; font-size: 1rem; font-family: inherit;">Artigos Criados</button>
+            </div>
+            
+            <div style="padding: 15px 20px 20px 20px; overflow-y: auto; background: var(--bg-main); flex: 1;">
+                <div id="tab-viewed" class="history-tab-content">
+                    <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-end;">
+                        <label for="historyFilter" style="margin-right: 10px; color: var(--text-secondary); font-size: 0.85rem;">Filtro:</label>
+                        <select id="historyFilter" onchange="fetchHistory(currentHistoryUserId, this.value)" style="padding: 6px; border-radius: 4px; background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-color); font-family: inherit; font-size: 0.85rem; outline: none;">
+                            <option value="all">Todo período</option>
+                            <option value="day">Hoje</option>
+                            <option value="week">Últimos 7 dias</option>
+                            <option value="month">Últimos 30 dias</option>
+                        </select>
+                    </div>
+                    <div id="historyViewedList">Carregando...</div>
+                </div>
+                <div id="tab-created" class="history-tab-content" style="display: none;">
+                    <div id="historyCreatedList">Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
     {% endblock %}

@@ -64,8 +64,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+# Banco de dados
+# Link da documentação de configuração de banco de dados do Django: Link da documentação de configuração de banco de dados do Django: https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
     'default': dj_database_url.config(
@@ -97,8 +97,8 @@ AUTH_USER_MODEL = 'wiki.CustomUser'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/'
 
-# Configuração de Cache (Alta Performance)
-# Usa Redis se REDIS_URL estiver definido, caso contrário usa Memória Local (Fallback)
+# Configuração de Cache de Alta Performance
+# Utiliza Redis para cache; fallback para Memória Local se REDIS_URL não for definido.
 if os.environ.get('REDIS_URL'):
     CACHES = {
         'default': {

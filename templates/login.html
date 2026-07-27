@@ -33,7 +33,7 @@
         </div>
 
         <div class="login-forms">
-            <!-- Form: Usuário Comum (Email) -->
+            <!-- Formulário de autenticação para Usuário Comum via e-mail. -->
             <form id="form-email" method="POST" action="{% url 'login' %}" autocomplete="off">
                 {% csrf_token %}
                 <input type="hidden" name="login_type" value="email">
@@ -63,7 +63,7 @@
                 <button type="submit" class="btn-primary btn-block">Entrar</button>
             </form>
 
-            <!-- Form: Funcionário (Código) -->
+            <!-- Formulário de autenticação para Funcionário via código de matrícula. -->
             <form id="form-employee" method="POST" action="{% url 'login' %}" style="display: none;" autocomplete="off">
                 {% csrf_token %}
                 <input type="hidden" name="login_type" value="employee_code">

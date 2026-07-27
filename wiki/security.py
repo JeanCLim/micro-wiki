@@ -7,19 +7,19 @@ def require_master_code(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        # 1. Conectado como SUPERADMIN (acessa direto)
+        # Acesso permitido para credencial categorizada como SUPERADMIN.
         if request.user.is_authenticated and getattr(request.user, 'role', None) == 'SUPERADMIN':
             return view_func(request, *args, **kwargs)
             
-        # 2. Conectado em conta inferior (acesso negado)
+        # Bloqueio de acesso para credenciais desprovidas de privilégios SUPERADMIN.
         if request.user.is_authenticated and getattr(request.user, 'role', None) != 'SUPERADMIN':
             from django.shortcuts import render
             return render(request, 'wiki/master/login.html', {'error': 'Você não tem acesso a essas informações.'})
             
-        # 3. Não conectado, mas com sessão de PIN ativa
+        # Liberação de roteamento via constatação de sessão de validação (PIN) ativa.
         if request.session.get('is_master_admin'):
             return view_func(request, *args, **kwargs)
             
-        # 4. Não conectado e sem PIN (redireciona para login do PIN)
+        # Redirecionamento obrigatório para entrada do PIN devido à ausência de sessão validada.
         return redirect('master_login')
     return _wrapped_view

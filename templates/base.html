@@ -75,7 +75,15 @@
                 {% if request.user.role == 'SUPERADMIN' and not request.user.company %}
                 <a href="{% url 'master_dashboard' %}" class="logo"><span class="logo-icon"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></span> Master Global</a>
                 {% else %}
-                <a href="{% url 'home' %}" class="logo"><span class="logo-icon"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></span> MicroWiki</a>
+                <a href="{% url 'home' %}" class="logo" style="display:flex; align-items:center; gap:10px;">
+                    <span class="logo-icon"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></span> MicroWiki
+                    {% if request.user.role == 'ADMIN' %}
+                    <span style="background-color: #3B82F6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">Painel ADMIN</span>
+                    <span style="color: #10B981; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 4px;" title="Sessões ativas simultâneas">
+                        <span style="display:inline-block; width:8px; height:8px; background-color:#10B981; border-radius:50%; box-shadow: 0 0 5px #10B981;"></span> {{ request.user.active_sessions_count }} Online
+                    </span>
+                    {% endif %}
+                </a>
                 {% endif %}
             </div>
             <div class="nav-center">
@@ -566,5 +574,46 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/js/shepherd.min.js"></script>
     <script src="{% static 'js/tour.js' %}"></script>
+
+    {% if request.user.is_authenticated %}
+    <script>
+        // Presence Engine Stateless & Robusto
+        (function() {
+            let errorCount = 0;
+            const maxErrors = 3;
+            
+            function sendHeartbeat() {
+                if (errorCount >= maxErrors) {
+                    console.warn('Heartbeat desativado após múltiplas falhas de conexão.');
+                    return;
+                }
+                
+                fetch('/api/heartbeat/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => {
+                    if(!res.ok) throw new Error('Servidor retornou erro.');
+                    errorCount = 0; // Resetar contador no sucesso
+                })
+                .catch(e => {
+                    console.error('Falha no Heartbeat:', e);
+                    errorCount++;
+                });
+            }
+            
+            // Loop de 5 segundos
+            setInterval(sendHeartbeat, 5000);
+            
+            // Ping inicial
+            sendHeartbeat();
+        })();
+    </script>
+    {% endif %}
 </body>
+
 </html>

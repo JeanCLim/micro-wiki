@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Inject Modal HTML into the body
+    // Injeta modal HTML no elemento body.
     const modalHTML = `
         <div id="imageOptimizerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
             <div style="background:#fff; padding:20px; border-radius:8px; max-width:500px; width:90%; text-align:center; font-family:sans-serif;">
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancel = document.getElementById('imageOptimizerCancel');
     const btnConfirm = document.getElementById('imageOptimizerConfirm');
 
-    // Attach to all forms
+    // Anexa manipulador a todos os formulários.
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
         form.addEventListener('submit', async function(e) {
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const MAX_SIZE = 2 * 1024 * 1024; // 2MB
             
             if (file.type.startsWith('image/') && file.size > MAX_SIZE) {
-                // If we already optimized it, skip
+                // Ignora imagens já otimizadas.
                 if (coverInput.dataset.optimized === "true") {
                     return;
                 }
@@ -45,11 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const compressedBlob = await compressImage(file);
                     
-                    // Show preview
+                    // Exibe visualização da imagem.
                     preview.src = URL.createObjectURL(compressedBlob);
                     modal.style.display = 'flex';
                     
-                    // Handle buttons
+                    // Manipula eventos dos botões de ação.
                     btnCancel.onclick = () => {
                         modal.style.display = 'none';
                         coverInput.value = ''; // clear
@@ -63,9 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         coverInput.files = dataTransfer.files;
                         coverInput.dataset.optimized = "true";
                         
-                        // Resubmit form
+                        // Reenvia o formulário correspondente.
                         form.submit();
-                        // For AJAX forms, we might need a dispatchEvent or just submit.
+                        // Aciona evento de submit nativo ou dispatchEvent para suporte a AJAX.
                     };
                 } catch (err) {
                     console.error("Erro na compressão: ", err);
@@ -108,7 +108,7 @@ function compressImage(file) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // Compress to JPEG with 0.8 quality
+                // Realiza compressão da imagem para JPEG (qualidade 0.8).
                 canvas.toBlob(blob => {
                     if (blob) {
                         resolve(blob);

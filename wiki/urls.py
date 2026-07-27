@@ -6,7 +6,7 @@ from .views import (
     CategoryCreateAPIView, UserProfileView, SettingsView, UserCreateAPIView, ArticleFrontendUpdateView,
     FavoriteToggleAPIView, ToggleDarkModeAPIView, TemplateDataAPIView,
     FullCalendarView, EventsAPIView, EventCreateAPIView, EventTypeCreateAPIView,
-    MasterLoginView, MasterDashboardView
+    MasterLoginView, MasterDashboardView, UserHistoryAPIView, ApproveArticleAPIView, HeartbeatAPIView
 )
 
 urlpatterns = [
@@ -25,6 +25,9 @@ urlpatterns = [
     path('api/notifications/', NotificationsAPIView.as_view(), name='api_notifications'),
     path('api/categories/novo/', CategoryCreateAPIView.as_view(), name='api_category_create'),
     path('api/users/novo/', UserCreateAPIView.as_view(), name='api_user_create'),
+    path('api/users/<int:user_id>/history/', UserHistoryAPIView.as_view(), name='api_user_history'),
+    path('api/heartbeat/', HeartbeatAPIView.as_view(), name='api_heartbeat'),
+    path('api/articles/<int:article_id>/approve/', ApproveArticleAPIView.as_view(), name='api_article_approve'),
     path('api/toggle-dark-mode/', ToggleDarkModeAPIView.as_view(), name='api_toggle_dark_mode'),
     path('api/templates/<int:template_id>/', TemplateDataAPIView.as_view(), name='api_template_data'),
     path('', HomeView.as_view(), name='home'),

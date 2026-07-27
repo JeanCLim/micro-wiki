@@ -18,7 +18,7 @@ def create_default_categories(sender, instance, created, **kwargs):
                 company=instance
             )
             
-        # Cria funcionário admin padrão da empresa
+        # Processo de geração automática do funcionário com nível administrador, alocado como padrão da empresa.
         from .models import CustomUser
         CustomUser.objects.create_user(
             username=f"superadmin_company_{instance.id}",

@@ -7,7 +7,7 @@
 </div>
 
 <div style="display: grid; grid-template-columns: 300px 1fr; gap: 30px;">
-    <!-- Resumo do Usuário -->
+    <!-- Exibição de dados resumidos do perfil de usuário. -->
     <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; height: fit-content;">
         <div style="width: 100px; height: 100px; {% if not request.user.profile_picture %}background-color: var(--accent-blue);{% else %}background-color: #ffffff;{% endif %} border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #000; font-weight: bold; overflow: hidden;">
             {% if request.user.profile_picture %}
@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <!-- Tabela de Contribuições -->
+    <!-- Exibição estruturada das contribuições associadas. -->
     {% if request.user.role != 'COMMON' %}
     <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
         <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem;">Minhas Contribuições</h2>
@@ -86,9 +86,9 @@
     {% endif %}
 
     {% if request.user.role == 'COMMON' or request.user.role == 'EMPLOYEE' %}
-    <!-- Preferências Visuais -->
+    <!-- Seção de configuração de preferências visuais. -->
     <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); {% if request.user.role != 'COMMON' %}margin-top: 30px; grid-column: 1 / -1;{% endif %}">
-        <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem;">Preferências Visuais</h2>
+        <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.3rem;">Seção de configuração de preferências visuais.</h2>
         <p style="color: var(--text-secondary); margin-bottom: 25px;">Personalize a aparência da Wiki para o seu usuário. Ninguém mais verá essas configurações.</p>
         
         <form method="POST" action="{% url 'profile' %}">

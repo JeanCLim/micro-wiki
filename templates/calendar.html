@@ -4,11 +4,11 @@
 {% block title %}Calendário de Eventos - MicroWiki{% endblock %}
 
 {% block content %}
-<!-- FullCalendar Scripts -->
+<!-- Importação de scripts do FullCalendar. -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/pt-br.global.min.js"></script>
 
-<!-- Flatpickr (Melhor seletor de Horários) -->
+<!-- Instanciação do seletor de horários Flatpickr. -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
@@ -246,7 +246,7 @@
     <div id="calendar"></div>
 </div>
 
-<!-- Offcanvas Sidebar -->
+<!-- Definição estrutural da barra lateral Offcanvas. -->
 <div class="offcanvas-backdrop" id="offcanvas-backdrop" onclick="closeOffcanvas()"></div>
 <div class="offcanvas" id="offcanvas">
     <div class="offcanvas-header">
@@ -260,7 +260,7 @@
                 <button class="btn-create" onclick="showEventForm()" style="width: 100%;">+ Adicionar Evento Neste Dia</button>
             </div>
             <div class="timeline" id="events-timeline">
-                <!-- Timeline items injected here -->
+                <!-- Injeção dinâmica de itens da linha do tempo. -->
             </div>
         </div>
 
@@ -289,7 +289,7 @@
                     </div>
                 </div>
                 
-                <!-- Inline New Type Form -->
+                <!-- Formulário inline para criação de novo tipo de evento. -->
                 <div id="new-type-form" style="display: none; background: var(--table-header-bg); padding: 15px; border-radius: var(--border-radius-base); margin-bottom: 15px; border: 1px dashed var(--border-color);">
                     <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 15px;">
                         <div class="form-group" style="flex: 1; margin-bottom: 0;">

@@ -10,7 +10,7 @@ def validate_mime_type(file):
     mime_type = magic.from_buffer(file.read(2048), mime=True)
     file.seek(0)
 
-    # Lista negra de mime types perigosos
+    # Relação estática de mime types classificados como prejudiciais ao sistema.
     forbidden_mimes = [
         'application/x-msdownload',
         'application/x-dosexec',

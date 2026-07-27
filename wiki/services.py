@@ -16,7 +16,7 @@ class HolidayService:
             
         holidays_list = []
         
-        # 1. Buscar feriados nacionais na Brasil API
+        # Executa requisição remota para captação de feriados nacionais na base da Brasil API.
         try:
             response = requests.get(f'https://brasilapi.com.br/api/feriados/v1/{year}', timeout=5)
             if response.status_code == 200:
@@ -33,17 +33,17 @@ class HolidayService:
             else:
                 HolidayService._append_national_fallback(holidays_list, year)
         except requests.exceptions.RequestException:
-            # Em caso de falha de conexão
+            # Implementação de tratamento para eventuais recusas de conexão da API remota.
             HolidayService._append_national_fallback(holidays_list, year)
             
-        # 2. Feriados Estaduais (Pernambuco)
+        # Procedimento de busca de feriados de abrangência estadual (Pernambuco).
         holidays_list.append({
             'date': f'{year}-03-06',
             'name': 'Data Magna de Pernambuco',
             'type': 'ESTADUAL'
         })
         
-        # 3. Feriados Municipais (Petrolina)
+        # Procedimento de busca de feriados de abrangência municipal (Petrolina).
         municipal_holidays = [
             ('06-24', 'São João'),
             ('08-15', 'Nossa Senhora Rainha dos Anjos'),
@@ -57,14 +57,14 @@ class HolidayService:
                 'type': 'MUNICIPAL'
             })
             
-        # Salva no cache. Dependendo do backend de cache, None significa cache eterno.
+        # Armazena os dados no provedor de cache por tempo indeterminado (conforme compatibilidade do backend).
         cache.set(cache_key, holidays_list, timeout=None)
         
         return holidays_list
 
     @staticmethod
     def _append_national_fallback(holidays_list, year):
-        # Fallback de emergência (Hardcoded) caso a Brasil API fique offline
+        # Mecanismo autônomo (hardcoded) para sustentação dos dados caso a Brasil API fique inoperante.
         national_dates = [
             ('01-01', 'Confraternização Universal'),
             ('04-21', 'Tiradentes'),

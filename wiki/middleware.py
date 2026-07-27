@@ -7,11 +7,11 @@ class UpdateLastSeenMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated:
-            # Update last_seen if it's None or older than 1 minute to avoid excessive DB writes
+            # Atualiza coluna last_seen a cada um minuto para reduzir excesso de consultas no banco de dados.
             now = timezone.now()
             if not request.user.last_seen or now - request.user.last_seen > datetime.timedelta(minutes=1):
                 request.user.last_seen = now
-                # update_fields avoids triggering full save() and signals
+                # Utiliza parâmetro update_fields para evitar sobrecarga de salvamento total da instância e execução de gatilhos.
                 request.user.save(update_fields=['last_seen'])
                 
         response = self.get_response(request)
@@ -24,7 +24,7 @@ class GlobalSuperadminIsolationMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated and request.user.role == 'SUPERADMIN' and request.user.company is None:
-            # Prevent accessing knowledge base routes
+            # Efetua o bloqueio do acesso às rotas restritas da base de conhecimento.
             allowed_prefixes = ['/master-control-panel/', '/logout/', '/static/', '/api/', '/admin/']
             if not any(request.path.startswith(p) for p in allowed_prefixes):
                 return redirect('master_dashboard')

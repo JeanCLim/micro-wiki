@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // We only start the tour if Shepherd is loaded
+    // Inicia o tour condicionalmente à disponibilidade da dependência Shepherd.
     if (typeof Shepherd === 'undefined') return;
 
     const tourCompleted = localStorage.getItem('microwiki_tour_completed');
@@ -55,14 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const hasSearch = document.querySelector('.search-form-mini');
     
-    // Auto start if not completed
+    // Inicia automaticamente o processo caso o tour não esteja concluído.
     if (!tourCompleted && hasSearch) {
         setTimeout(() => {
             tour.start();
         }, 500);
     }
     
-    // Auto start if forced via parameter (from Settings)
+    // Inicia automaticamente se houver parâmetro forçado nas configurações.
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('tour') === '1' && hasSearch) {
         setTimeout(() => {

@@ -25,12 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const starIcon = document.getElementById('star-icon');
                     if (data.favorited) {
                         starIcon.setAttribute('fill', 'currentColor');
-                        // Add to sidebar
+                        // Adiciona item específico à barra lateral.
                         const container = document.getElementById('sidebar-favorites-container');
                         const list = document.getElementById('sidebar-favorites-list');
                         if (container && list) {
                             container.style.display = 'block';
-                            // Check if already exists
+                            // Valida a existência prévia do item no DOM.
                             if (!list.querySelector(`li[data-slug="${data.slug}"]`)) {
                                 const li = document.createElement('li');
                                 li.setAttribute('data-slug', data.slug);
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     } else {
                         starIcon.setAttribute('fill', 'none');
-                        // Remove from sidebar
+                        // Remove o item selecionado da barra lateral.
                         const container = document.getElementById('sidebar-favorites-container');
                         const list = document.getElementById('sidebar-favorites-list');
                         if (container && list) {

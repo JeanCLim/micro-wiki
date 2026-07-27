@@ -1,5 +1,151 @@
 {% extends 'base.html' %}
-{% block title %}Master Admin | Global SaaS{% endblock %}
+{% block title %}Master Admin | Global SaaS
+<!-- Modal de Edição de Usuário Global (Ajax/Fetch) -->
+<dialog id="editUserModal" style="margin: auto; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 25px rgba(0,0,0,0.5); width: 450px;">
+    <h3 style="margin-top: 0; margin-bottom: 20px; color: var(--accent-blue);">Editar Usuário</h3>
+    
+    <form id="editUserForm" onsubmit="submitEditUser(event)">
+        <input type="hidden" name="action" value="edit_user">
+        <input type="hidden" name="user_id" id="edit_user_id">
+        <input type="hidden" name="ajax" value="1">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Nome / Username</label>
+        <input type="text" name="name" id="edit_user_name" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">E-mail</label>
+        <input type="email" name="email" id="edit_user_email" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Empresa (Bloqueado)</label>
+        <input type="text" id="edit_user_company" disabled style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: rgba(0,0,0,0.1); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; cursor: not-allowed;">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Qualificação (Hierarquia)</label>
+        <select name="role" id="edit_user_role" style="width: 100%; padding: 10px; margin-bottom: 25px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+            <option value="COMMON">Usuário</option>
+            <option value="EMPLOYEE">Funcionário</option>
+            <option value="ADMIN">Supervisor</option>
+        </select>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('editUserModal').close()">Cancelar</button>
+            <button type="submit" class="btn-primary" style="background-color: var(--accent-blue);">Salvar Alterações</button>
+        </div>
+    </form>
+    
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: center;">
+        <form id="deleteUserForm" onsubmit="submitDeleteUser(event)">
+            <input type="hidden" name="action" value="delete_user">
+            <input type="hidden" name="user_id" id="delete_user_id_hidden">
+            <input type="hidden" name="ajax" value="1">
+            <button type="submit" style="background-color: transparent; color: #EF4444; border: 1px solid #EF4444; border-radius: 6px; padding: 8px 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#EF4444'; this.style.color='white';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#EF4444';">⚠️ Deletar Conta</button>
+        </form>
+    </div>
+</dialog>
+
+<script>
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+    }
+
+    function fetchFilteredUsers() {
+        const empresa = document.getElementById('filter_empresa_id').value;
+        const role = document.getElementById('filter_role').value;
+        const url = `{% url 'master_dashboard' %}?ajax=1&empresa_id=${empresa}&role=${role}`;
+        
+        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-secondary);">Carregando usuários...</td></tr>';
+        
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.html) {
+                document.getElementById('usersTableBody').innerHTML = data.html;
+            }
+        })
+        .catch(err => {
+            console.error('Erro no fetchFilteredUsers:', err);
+            document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #EF4444;">Erro ao carregar. Verifique a conexão.</td></tr>';
+        });
+    }
+
+    function clearFilters() {
+        document.getElementById('filter_empresa_id').value = '';
+        document.getElementById('filter_role').value = '';
+        fetchFilteredUsers();
+    }
+
+    function openEditUserModal(id, username, email, role, company) {
+        document.getElementById('edit_user_id').value = id;
+        document.getElementById('edit_user_name').value = username;
+        document.getElementById('edit_user_email').value = email;
+        document.getElementById('edit_user_role').value = role;
+        document.getElementById('edit_user_company').value = company;
+        document.getElementById('delete_user_id_hidden').value = id;
+        document.getElementById('editUserModal').showModal();
+    }
+
+    async function submitEditUser(e) {
+        e.preventDefault();
+        const form = document.getElementById('editUserForm');
+        const formData = new FormData(form);
+        const url = `{% url 'master_dashboard' %}`;
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: formData
+            });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('editUserModal').close();
+                fetchFilteredUsers(); // Atualiza a lista!
+            } else {
+                alert('Erro ao salvar: ' + (data.error || 'Desconhecido'));
+            }
+        } catch(err) {
+            console.error('Erro no submitEditUser:', err);
+            alert('Falha na comunicação com o servidor.');
+        }
+    }
+
+    async function submitDeleteUser(e) {
+        e.preventDefault();
+        if(!confirm('ATENÇÃO! Tem certeza que deseja apagar DEFINITIVAMENTE este usuário?')) return;
+        
+        const form = document.getElementById('deleteUserForm');
+        const formData = new FormData(form);
+        const url = `{% url 'master_dashboard' %}`;
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: formData
+            });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('editUserModal').close();
+                fetchFilteredUsers(); // Atualiza a lista!
+            } else {
+                alert('Erro ao deletar: ' + (data.error || 'Desconhecido'));
+            }
+        } catch(err) {
+            console.error('Erro no submitDeleteUser:', err);
+            alert('Falha na comunicação com o servidor.');
+        }
+    }
+</script>
+
+{% endblock %}
 
 {% block content %}
 <style>
@@ -98,7 +244,14 @@
     input:checked + .slider:before {
         transform: translateX(22px);
     }
-</style>
+
+    /* Refatoração UX / UI Master */
+    .content-wrapper { max-width: none !important; width: 100% !important; padding: 0 40px !important; }
+    .master-pane table { white-space: nowrap; }
+    @media (max-width: 768px) {
+        .master-pane table { white-space: normal; }
+    }
+    </style>
 
 <div class="header" style="margin-bottom: 2rem;">
     <span class="master-badge">⚡ SUPERADMIN GLOBAL</span>
@@ -107,7 +260,7 @@
 </div>
 
 <div style="display: grid; grid-template-columns: 250px 1fr; gap: 30px; min-height: 60vh;">
-    <!-- Sidebar Interna -->
+    <!-- Definição do componente de barra lateral interna. -->
     <div style="display: flex; flex-direction: column; justify-content: space-between; background-color: var(--bg-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
         <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
             <li><button class="settings-tab active" onclick="showMasterTab('dashboard')" style="width: 100%; text-align: left; padding: 12px 15px; background: rgba(139, 92, 246, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue); border-radius: 6px; cursor: pointer; font-weight: 500;">📊 Visão Geral</button></li>
@@ -122,10 +275,10 @@
         </div>
     </div>
 
-    <!-- Conteúdo das Abas -->
+    <!-- Container de injeção de conteúdos tabulados. -->
     <div style="background-color: var(--bg-surface); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
         
-        <!-- Aba: Dashboard Overview -->
+        <!-- Seção de visão geral do painel administrativo. -->
         <div id="tab-dashboard" class="master-pane" style="display: block;">
             <h2 style="margin-top: 0; margin-bottom: 25px;">Panorama do Ecossistema</h2>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
@@ -144,7 +297,7 @@
             </div>
         </div>
 
-        <!-- Aba: Workspaces -->
+        <!-- Seção de controle de todos os workspaces criados. -->
         <div id="tab-empresas" class="master-pane" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Empresas Cadastradas</h2>
@@ -210,11 +363,37 @@
             </div>
         </div>
 
-        <!-- Aba: Gestão Global de Usuários -->
+        <!-- Seção de administração global de todos os usuários do sistema. -->
         <div id="tab-usuarios" class="master-pane" style="display: none;">
+            
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Base Global de Usuários</h2>
             </div>
+            
+            <div style="background-color: var(--table-header-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--table-border);">
+                <form id="filterUsersForm" style="display: flex; gap: 15px; align-items: flex-end;" onsubmit="return false;">
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Empresa</label>
+                        <select id="filter_empresa_id" name="empresa_id" onchange="fetchFilteredUsers()" style="padding: 8px; border-radius: 4px; border: 1px solid var(--table-border); background-color: var(--bg-primary); color: var(--text-primary); min-width: 200px;">
+                            <option value="">Todas as Empresas</option>
+                            {% for comp in companies %}
+                            <option value="{{ comp.id }}" {% if selected_empresa == comp.id|stringformat:"s" %}selected{% endif %}>{{ comp.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Qualificação</label>
+                        <select id="filter_role" name="role" onchange="fetchFilteredUsers()" style="padding: 8px; border-radius: 4px; border: 1px solid var(--table-border); background-color: var(--bg-primary); color: var(--text-primary); min-width: 200px;">
+                            <option value="">Todas as Qualificações</option>
+                            <option value="COMMON" {% if selected_role == 'COMMON' %}selected{% endif %}>Usuário</option>
+                            <option value="EMPLOYEE" {% if selected_role == 'EMPLOYEE' %}selected{% endif %}>Funcionário</option>
+                            <option value="ADMIN" {% if selected_role == 'ADMIN' %}selected{% endif %}>Supervisor</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn-secondary" onclick="clearFilters()" style="padding: 9px 15px;">Limpar</button>
+                </form>
+            </div>
+
             
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -222,12 +401,12 @@
                         <tr style="background-color: var(--table-header-bg); border-bottom: 1px solid var(--table-border);">
                             <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Nome</th>
                             <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Empresa Origem</th>
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Role</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Qualificação</th>
                             <th style="padding: 12px; font-weight: 500; color: var(--text-secondary);">Atividade</th>
-                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary); text-align: right;">Deletar</th>
+                            <th style="padding: 12px; font-weight: 500; color: var(--text-secondary); text-align: center;">Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="usersTableBody">
                         {% for u in users %}
                         <tr style="border-bottom: 1px solid var(--table-border);">
                             <td style="padding: 12px; font-weight: 500;">
@@ -246,13 +425,10 @@
                                 {% endif %}
                                 <div style="font-size: 0.75rem; color: #64748B;">Último acesso: {{ u.last_seen|date:"d/m H:i"|default:"-" }}</div>
                             </td>
-                            <td style="padding: 12px; text-align: right;">
-                                <form method="POST" style="margin: 0;" onsubmit="return confirm('Tem certeza que deseja apagar este usuário DEFINITIVAMENTE da base?');">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="delete_user">
-                                    <input type="hidden" name="user_id" value="{{ u.id }}">
-                                    <button type="submit" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 1.1rem;" title="Apagar Conta">🗑️</button>
-                                </form>
+                            <td style="padding: 12px; text-align: center;">
+                                <button type="button" onclick="openEditUserModal('{{ u.id }}', '{{ u.username }}', '{{ u.email }}', '{{ u.role }}', '{{ u.company.name|default:"Sem Empresa" }}')" style="background: none; border: none; cursor: pointer; color: var(--accent-blue); display: block; margin: 0 auto;" title="Editar Usuário">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -261,7 +437,7 @@
             </div>
         </div>
 
-        <!-- Aba: Categorias Master -->
+        <!-- Seção administrativa focada em categorias globais. -->
         <div id="tab-categorias" class="master-pane" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Injeção de Categorias</h2>
@@ -293,7 +469,7 @@
     </div>
 </div>
 
-<!-- Modal Nova Empresa -->
+<!-- Componente modal para a inserção de um novo workspace. -->
 <dialog id="modal-company" style="margin: auto; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 25px rgba(0,0,0,0.5); width: 400px;">
     <h3 style="margin-top: 0; margin-bottom: 20px; color: var(--accent-blue);">Nova Instância (Workspace)</h3>
     <form method="POST">
@@ -316,7 +492,7 @@
     </form>
 </dialog>
 
-<!-- Modal Injetar Categoria -->
+<!-- Componente modal para a propagação de novas categorias nas instâncias. -->
 <dialog id="modal-category" style="margin: auto; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 25px rgba(0,0,0,0.5); width: 400px;">
     <h3 style="margin-top: 0; margin-bottom: 20px; color: var(--accent-blue);">Injeção de Categoria Especial</h3>
     <form method="POST">
@@ -413,4 +589,150 @@ function toggleCompany(companyId, checkbox) {
     });
 }
 </script>
+
+<!-- Modal de Edição de Usuário Global (Ajax/Fetch) -->
+<dialog id="editUserModal" style="margin: auto; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 25px rgba(0,0,0,0.5); width: 450px;">
+    <h3 style="margin-top: 0; margin-bottom: 20px; color: var(--accent-blue);">Editar Usuário</h3>
+    
+    <form id="editUserForm" onsubmit="submitEditUser(event)">
+        <input type="hidden" name="action" value="edit_user">
+        <input type="hidden" name="user_id" id="edit_user_id">
+        <input type="hidden" name="ajax" value="1">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Nome / Username</label>
+        <input type="text" name="name" id="edit_user_name" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">E-mail</label>
+        <input type="email" name="email" id="edit_user_email" required style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Empresa (Bloqueado)</label>
+        <input type="text" id="edit_user_company" disabled style="width: 100%; padding: 10px; margin-bottom: 15px; background-color: rgba(0,0,0,0.1); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; cursor: not-allowed;">
+        
+        <label style="display:block; margin-bottom:5px; color:var(--text-secondary); font-size:0.9rem;">Qualificação (Hierarquia)</label>
+        <select name="role" id="edit_user_role" style="width: 100%; padding: 10px; margin-bottom: 25px; background-color: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box;">
+            <option value="COMMON">Usuário</option>
+            <option value="EMPLOYEE">Funcionário</option>
+            <option value="ADMIN">Supervisor</option>
+        </select>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('editUserModal').close()">Cancelar</button>
+            <button type="submit" class="btn-primary" style="background-color: var(--accent-blue);">Salvar Alterações</button>
+        </div>
+    </form>
+    
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: center;">
+        <form id="deleteUserForm" onsubmit="submitDeleteUser(event)">
+            <input type="hidden" name="action" value="delete_user">
+            <input type="hidden" name="user_id" id="delete_user_id_hidden">
+            <input type="hidden" name="ajax" value="1">
+            <button type="submit" style="background-color: transparent; color: #EF4444; border: 1px solid #EF4444; border-radius: 6px; padding: 8px 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#EF4444'; this.style.color='white';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#EF4444';">⚠️ Deletar Conta</button>
+        </form>
+    </div>
+</dialog>
+
+<script>
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
+    }
+
+    function fetchFilteredUsers() {
+        const empresa = document.getElementById('filter_empresa_id').value;
+        const role = document.getElementById('filter_role').value;
+        const url = `{% url 'master_dashboard' %}?ajax=1&empresa_id=${empresa}&role=${role}`;
+        
+        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-secondary);">Carregando usuários...</td></tr>';
+        
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.html) {
+                document.getElementById('usersTableBody').innerHTML = data.html;
+            }
+        })
+        .catch(err => {
+            console.error('Erro no fetchFilteredUsers:', err);
+            document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #EF4444;">Erro ao carregar. Verifique a conexão.</td></tr>';
+        });
+    }
+
+    function clearFilters() {
+        document.getElementById('filter_empresa_id').value = '';
+        document.getElementById('filter_role').value = '';
+        fetchFilteredUsers();
+    }
+
+    function openEditUserModal(id, username, email, role, company) {
+        document.getElementById('edit_user_id').value = id;
+        document.getElementById('edit_user_name').value = username;
+        document.getElementById('edit_user_email').value = email;
+        document.getElementById('edit_user_role').value = role;
+        document.getElementById('edit_user_company').value = company;
+        document.getElementById('delete_user_id_hidden').value = id;
+        document.getElementById('editUserModal').showModal();
+    }
+
+    async function submitEditUser(e) {
+        e.preventDefault();
+        const form = document.getElementById('editUserForm');
+        const formData = new FormData(form);
+        const url = `{% url 'master_dashboard' %}`;
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: formData
+            });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('editUserModal').close();
+                fetchFilteredUsers(); // Atualiza a lista!
+            } else {
+                alert('Erro ao salvar: ' + (data.error || 'Desconhecido'));
+            }
+        } catch(err) {
+            console.error('Erro no submitEditUser:', err);
+            alert('Falha na comunicação com o servidor.');
+        }
+    }
+
+    async function submitDeleteUser(e) {
+        e.preventDefault();
+        if(!confirm('ATENÇÃO! Tem certeza que deseja apagar DEFINITIVAMENTE este usuário?')) return;
+        
+        const form = document.getElementById('deleteUserForm');
+        const formData = new FormData(form);
+        const url = `{% url 'master_dashboard' %}`;
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: formData
+            });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('editUserModal').close();
+                fetchFilteredUsers(); // Atualiza a lista!
+            } else {
+                alert('Erro ao deletar: ' + (data.error || 'Desconhecido'));
+            }
+        } catch(err) {
+            console.error('Erro no submitDeleteUser:', err);
+            alert('Falha na comunicação com o servidor.');
+        }
+    }
+</script>
+
 {% endblock %}
