@@ -12,22 +12,6 @@ class Company(models.Model):
     domain = models.CharField(max_length=100, blank=True)
     is_active = models.BooleanField(default=True)
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.name
 
@@ -39,22 +23,6 @@ class WorkspaceSettings(models.Model):
     session_timeout_minutes = models.IntegerField(default=120)
     slack_webhook_url = models.URLField(blank=True, null=True)
     
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return f"Configurações - {self.company.name}"
 
@@ -131,44 +99,12 @@ class Category(models.Model):
     class Meta:
         unique_together = ('company', 'slug')
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.name
 
 class Tag(models.Model):
     name = models.CharField(max_length=50)
     slug = models.SlugField(unique=True)
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -208,51 +144,11 @@ class Article(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.title
 
     def get_absolute_url(self):
         return reverse('article_detail', args=[self.slug])
-
-    def save(self, *args, **kwargs):
-        if self.content:
-            allowed_tags = ['b', 'i', 'u', 'em', 'strong', 'a', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'table', 'tbody', 'tr', 'td', 'img']
-            allowed_attributes = {'a': ['href', 'title'], 'img': ['src', 'alt', 'width', 'height']}
-            self.content = bleach.clean(self.content, tags=allowed_tags, attributes=allowed_attributes)
-
-        if self.cover_image:
-            try:
-                self.cover_image_size = self.cover_image.size
-            except (ValueError, AttributeError):
-                self.cover_image_size = 0
-        else:
-            self.cover_image_size = 0
-            
-        if self.attachment:
-            try:
-                self.attachment_size = self.attachment.size
-            except (ValueError, AttributeError):
-                self.attachment_size = 0
-        else:
-            self.attachment_size = 0
-            
-        super().save(*args, **kwargs)
 
 class ArticleTemplate(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='article_templates', null=True, blank=True)
@@ -263,22 +159,6 @@ class ArticleTemplate(models.Model):
     default_visibility = models.CharField(max_length=20, choices=Article.VISIBILITY_CHOICES, default='PUBLIC')
     created_at = models.DateTimeField(auto_now_add=True)
     
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.title
 
@@ -288,22 +168,6 @@ class ApprovalNotification(models.Model):
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return f"Aprovação pendente: {self.article.title}"
 
@@ -312,22 +176,6 @@ class SystemUpdate(models.Model):
     message = models.TextField()
     version = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Update {self.version} - {self.title}"
@@ -341,22 +189,6 @@ class FavoriteArticle(models.Model):
         unique_together = ('user', 'article')
         ordering = ['-created_at']
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return f"{self.user.username} favoritou {self.article.title}"
 
@@ -364,22 +196,6 @@ class EventType(models.Model):
     name = models.CharField(max_length=100)
     color = models.CharField(max_length=7, default='#2563EB')
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='event_types', null=True, blank=True)
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -394,22 +210,6 @@ class Event(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_events')
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='events', null=True, blank=True)
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.title
 
@@ -421,22 +221,6 @@ class UserArticleAccess(models.Model):
 
     class Meta:
         unique_together = ('user', 'article')
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.pk:
-            old_instance = CustomUser.objects.get(pk=self.pk)
-            if old_instance.role == 'ADMIN' and self.role != 'ADMIN':
-                raise ValidationError("Contas com a qualificação 'Administrador' (ADM) jamais podem ter sua qualificação alterada.")
-                
-        if self.role == 'ADMIN' and self.company:
-            existing_admin = CustomUser.objects.filter(company=self.company, role='ADMIN').exclude(pk=self.pk).exists()
-            if existing_admin:
-                raise ValidationError("A empresa já possui um Administrador. Cada empresa deve ter estritamente uma única conta de Administrador.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user.username} acessou {self.article.title} ({self.access_count}x)"
